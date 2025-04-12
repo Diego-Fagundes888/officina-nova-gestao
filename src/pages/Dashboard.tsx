@@ -2,7 +2,7 @@
 import CardStats from "@/components/CardStats";
 import { useApp } from "@/context/AppContext";
 import { ServiceStatus } from "@/types";
-import { formatCurrency, getDailyRevenue } from "@/utils/mockData";
+import { formatCurrency } from "@/utils/mockData";
 import { BarChart3, Car, Clock, DollarSign, Wrench, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -27,7 +27,8 @@ export default function Dashboard() {
       new Date(order.completedAt).toDateString() === today.toDateString()
   );
   
-  const dailyRevenue = getDailyRevenue();
+  // Calcular a receita diária diretamente a partir dos pedidos completados hoje
+  const dailyRevenue = completedToday.reduce((sum, order) => sum + order.total, 0);
   
   return (
     <div className="space-y-6">

@@ -2,7 +2,6 @@
 import { useApp } from "@/context/AppContext";
 import { 
   formatCurrency, 
-  getDailyRevenue, 
   getWeeklyRevenue, 
   getMonthlyRevenue,
   getDailyExpenses,
@@ -10,7 +9,7 @@ import {
   getRevenueChartData
 } from "@/utils/mockData";
 import { useState } from "react";
-import { DollarSign, PlusCircle, TrendingDown, TrendingUp } from "lucide-react";
+import { DollarSign, PlusCircle, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,18 +27,41 @@ import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CardStats from "@/components/CardStats";
+import RevenueHistory from "@/components/RevenueHistory";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { ServiceStatus } from "@/types";
 
 export default function Financial() {
-  const { expenses, addExpense } = useApp();
+  const { expenses, addExpense, deleteExpense, serviceOrders } = useApp();
   const [newExpense, setNewExpense] = useState({
     description: "",
     amount: "",
     category: "",
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
   
-  const dailyRevenue = getDailyRevenue();
+  // Calcular a receita diária diretamente dos pedidos completados hoje
+  const today = new Date();
+  const completedToday = serviceOrders.filter(
+    (order) => 
+      order.status === ServiceStatus.COMPLETED && 
+      order.completedAt && 
+      new Date(order.completedAt).toDateString() === today.toDateString()
+  );
+  const dailyRevenue = completedToday.reduce((sum, order) => sum + order.total, 0);
+  
   const weeklyRevenue = getWeeklyRevenue();
   const monthlyRevenue = getMonthlyRevenue();
   const dailyExpenses = getDailyExpenses();
@@ -71,6 +93,11 @@ export default function Financial() {
       
       setIsDialogOpen(false);
     }
+  };
+
+  const handleDeleteExpense = (id: string) => {
+    deleteExpense(id);
+    setExpenseToDelete(null);
   };
   
   return (
@@ -197,9 +224,12 @@ export default function Financial() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Histórico de Receitas */}
+      <RevenueHistory />
       
       <Tabs defaultValue="monthly">
-        <TabsList className="grid grid-cols-3">
+        <TabsList className="grid w-full md:w-auto grid-cols-3">
           <TabsTrigger value="daily">Diário</TabsTrigger>
           <TabsTrigger value="weekly">Semanal</TabsTrigger>
           <TabsTrigger value="monthly">Mensal</TabsTrigger>
@@ -212,7 +242,7 @@ export default function Financial() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Receita Total</p>
                     <p className="text-2xl font-bold text-green-500">{formatCurrency(dailyRevenue)}</p>
@@ -246,7 +276,7 @@ export default function Financial() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Receita Total</p>
                     <p className="text-2xl font-bold text-green-500">{formatCurrency(weeklyRevenue)}</p>
@@ -292,7 +322,7 @@ export default function Financial() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Receita Total</p>
                     <p className="text-2xl font-bold text-green-500">{formatCurrency(monthlyRevenue)}</p>
@@ -344,10 +374,41 @@ export default function Financial() {
                           {formatDate(expense.date)} • {expense.category}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="flex items-center gap-3">
                         <p className="font-semibold text-red-500">
                           {formatCurrency(expense.amount)}
                         </p>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-100"
+                              onClick={() => setExpenseToDelete(expense.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel onClick={() => setExpenseToDelete(null)}>
+                                Cancelar
+                              </AlertDialogCancel>
+                              <AlertDialogAction 
+                                className="bg-red-500 hover:bg-red-600"
+                                onClick={() => expense.id && handleDeleteExpense(expense.id)}
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </div>

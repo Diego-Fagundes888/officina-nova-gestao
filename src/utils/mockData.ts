@@ -1,3 +1,4 @@
+
 import { ServiceOrder, ServiceStatus, InventoryItem, Appointment, Expense } from "@/types";
 import { addDays, format } from "date-fns";
 
@@ -203,16 +204,6 @@ export const mockExpenses: Expense[] = [
     category: "Utilidades",
   },
 ];
-
-// Get daily revenue
-export const getDailyRevenue = () => {
-  const completed = mockServiceOrders.filter(
-    (order) => order.status === ServiceStatus.COMPLETED &&
-    new Date(order.completedAt || "").toDateString() === new Date().toDateString()
-  );
-  
-  return completed.reduce((sum, order) => sum + order.total, 0);
-};
 
 // Get weekly revenue
 export const getWeeklyRevenue = () => {
