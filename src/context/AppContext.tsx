@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { ServiceOrder, Appointment, InventoryItem, Expense, ServiceStatus } from "@/types";
 import { mockServiceOrders, mockAppointments, mockExpenses, generateId } from "@/utils/mockData";
@@ -294,6 +295,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteServiceOrder = async (id: string) => {
     try {
+      // Verifica se é um UUID válido
+      if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        toast.error("ID inválido para exclusão");
+        return;
+      }
+      
       const { error } = await supabase
         .from('service_orders')
         .delete()
@@ -530,16 +537,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteExpense = async (id: string) => {
     try {
-      // Verificar se o ID é do Supabase (UUID) ou é um ID mock
-      if (id.length === 36 && id.includes('-')) {
-        // É um UUID válido, tenta excluir no Supabase
-        const { error } = await supabase
-          .from('expenses')
-          .delete()
-          .eq('id', id);
-      
-        if (error) throw error;
+      // Verifica se é um UUID válido
+      if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        toast.error("ID inválido para exclusão");
+        return;
       }
+      
+      // Verificar se o ID é do Supabase (UUID) e tentar excluir no Supabase
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
       
       // Independentemente se é do Supabase ou mock, removemos do estado local
       setExpenses(expenses.filter(expense => expense.id !== id));

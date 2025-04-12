@@ -63,13 +63,13 @@ export default function ServiceOrders() {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Ordens de Serviço</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Ordens de Serviço</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Gerencie as ordens de serviço da oficina
           </p>
         </div>
-        <Button asChild className="mt-2 sm:mt-0">
-          <Link to="/ordens/nova">
+        <Button asChild className="mt-2 sm:mt-0 w-full sm:w-auto">
+          <Link to="/ordens/nova" className="flex items-center justify-center">
             <FilePlus className="h-4 w-4 mr-2" />
             Nova OS
           </Link>
@@ -313,11 +313,42 @@ export default function ServiceOrders() {
                           <div className="flex flex-row sm:flex-col justify-between sm:items-end gap-2">
                             <p className="font-semibold">{formatCurrency(order.total)}</p>
                             
-                            <Button variant="outline" size="sm" asChild className="h-8 w-8 p-0">
-                              <Link to={`/ordens/${order.id}`}>
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm" asChild className="h-8 w-8 p-0">
+                                <Link to={`/ordens/${order.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta ação não pode ser desfeita. Esta OS será excluída permanentemente.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteServiceOrder(order.id)}
+                                      className="bg-destructive text-destructive-foreground"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -361,11 +392,42 @@ export default function ServiceOrders() {
                           <div className="flex flex-row sm:flex-col justify-between sm:items-end gap-2">
                             <p className="font-semibold">{formatCurrency(order.total)}</p>
                             
-                            <Button variant="outline" size="sm" asChild className="h-8 w-8 p-0">
-                              <Link to={`/ordens/${order.id}`}>
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm" asChild className="h-8 w-8 p-0">
+                                <Link to={`/ordens/${order.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta ação não pode ser desfeita. Esta OS será excluída permanentemente.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteServiceOrder(order.id)}
+                                      className="bg-destructive text-destructive-foreground"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </div>
                         </div>
                       </div>
