@@ -540,20 +540,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteExpense = async (id: string) => {
     try {
-      if (!isValidUUID(id)) {
+      if (!id) {
         toast.error("ID inválido para exclusão");
         return;
       }
       
-      const { error } = await supabase
-        .from('expenses')
-        .delete()
-        .eq('id', id);
+      console.log("Tentando excluir despesa com ID:", id);
       
-      if (error) throw error;
+      if (!isValidUUID(id) && expenses.some(e => e.id === id)) {
+        setExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== id));
+        toast.success("Despesa excluída!");
+        return;
+      }
       
-      setExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== id));
-      toast.success("Despesa excluída!");
+      if (isValidUUID(id)) {
+        const { error } = await supabase
+          .from('expenses')
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+        
+        setExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== id));
+        toast.success("Despesa excluída!");
+      } else {
+        toast.error("Formato de ID inválido para exclusão no banco de dados");
+      }
     } catch (error: any) {
       console.error("Erro ao excluir despesa:", error);
       toast.error(`Erro ao excluir despesa: ${error.message}`);

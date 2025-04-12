@@ -1,4 +1,3 @@
-
 import { useApp } from "@/context/AppContext";
 import { 
   formatCurrency, 
@@ -52,7 +51,6 @@ export default function Financial() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
   
-  // Calcular a receita diária diretamente dos pedidos completados hoje
   const today = new Date();
   const completedToday = serviceOrders.filter(
     (order) => 
@@ -96,8 +94,10 @@ export default function Financial() {
   };
 
   const handleDeleteExpense = (id: string) => {
-    deleteExpense(id);
-    setExpenseToDelete(null);
+    console.log("Excluindo despesa com ID:", id);
+    if (id) {
+      deleteExpense(id);
+    }
   };
   
   return (
@@ -225,7 +225,6 @@ export default function Financial() {
         </CardContent>
       </Card>
 
-      {/* Histórico de Receitas */}
       <RevenueHistory />
       
       <Tabs defaultValue="monthly">
@@ -384,7 +383,6 @@ export default function Financial() {
                               variant="ghost" 
                               size="icon" 
                               className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-100"
-                              onClick={() => setExpenseToDelete(expense.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -397,7 +395,7 @@ export default function Financial() {
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel onClick={() => setExpenseToDelete(null)}>
+                              <AlertDialogCancel>
                                 Cancelar
                               </AlertDialogCancel>
                               <AlertDialogAction 
