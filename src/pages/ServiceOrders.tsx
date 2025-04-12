@@ -2,7 +2,7 @@
 import { useApp } from "@/context/AppContext";
 import { ServiceStatus } from "@/types";
 import { formatCurrency } from "@/utils/mockData";
-import { Eye, FilePlus, Pencil, Trash2 } from "lucide-react";
+import { Eye, FilePlus, Pencil, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -60,15 +60,15 @@ export default function ServiceOrders() {
   };
   
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Ordens de Serviço</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Ordens de Serviço</h1>
+          <p className="text-sm text-muted-foreground">
             Gerencie as ordens de serviço da oficina
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="mt-2 sm:mt-0">
           <Link to="/ordens/nova">
             <FilePlus className="h-4 w-4 mr-2" />
             Nova OS
@@ -76,108 +76,115 @@ export default function ServiceOrders() {
         </Button>
       </div>
       
-      <Tabs defaultValue="in-progress">
-        <TabsList className="grid grid-cols-4">
-          <TabsTrigger value="in-progress">
-            Em Andamento ({inProgressOrders.length})
+      <Tabs defaultValue="in-progress" className="w-full">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 mb-4 w-full">
+          <TabsTrigger value="in-progress" className="text-xs sm:text-sm py-1.5">
+            Em And. ({inProgressOrders.length})
           </TabsTrigger>
-          <TabsTrigger value="draft">
-            Rascunhos ({draftOrders.length})
+          <TabsTrigger value="draft" className="text-xs sm:text-sm py-1.5">
+            Rasc. ({draftOrders.length})
           </TabsTrigger>
-          <TabsTrigger value="completed">
-            Concluídos ({completedOrders.length})
+          <TabsTrigger value="completed" className="text-xs sm:text-sm py-1.5">
+            Concl. ({completedOrders.length})
           </TabsTrigger>
-          <TabsTrigger value="canceled">
-            Cancelados ({canceledOrders.length})
+          <TabsTrigger value="canceled" className="text-xs sm:text-sm py-1.5">
+            Canc. ({canceledOrders.length})
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="in-progress" className="mt-6">
+        <TabsContent value="in-progress">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Ordens em Andamento</CardTitle>
+            <CardHeader className="pb-2 px-3 sm:px-6">
+              <CardTitle className="text-lg sm:text-xl">Ordens em Andamento</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6">
               {inProgressOrders.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-6 text-muted-foreground text-sm">
                   Não há ordens de serviço em andamento.
                 </div>
               ) : (
                 <div className="divide-y divide-border">
                   {inProgressOrders.map((order) => (
-                    <div key={order.id} className="py-4">
-                      <div className="flex flex-col md:flex-row justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <h3 className="font-medium">{order.clientName}</h3>
-                            <Badge variant="default">Em Andamento</Badge>
+                    <div key={order.id} className="py-3 sm:py-4">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                          <div className="space-y-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              <h3 className="font-medium text-base">{order.clientName}</h3>
+                              <Badge variant="default" className="w-fit text-xs">Em Andamento</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {order.vehicle.model} ({order.vehicle.year}) - {order.vehicle.plate}
+                            </p>
+                            <p className="text-xs sm:text-sm">{order.serviceType}</p>
+                            <p className="text-xs">
+                              Criado em {formatDate(order.createdAt)}
+                            </p>
                           </div>
-                          <p className="text-muted-foreground">
-                            {order.vehicle.model} ({order.vehicle.year}) - {order.vehicle.plate}
-                          </p>
-                          <p className="text-sm">{order.serviceType}</p>
-                          <p className="text-sm">
-                            Criado em {formatDate(order.createdAt)}
-                          </p>
-                        </div>
-                        <div className="flex flex-col justify-between items-end gap-2">
-                          <p className="font-semibold">{formatCurrency(order.total)}</p>
-                          <div className="flex gap-2">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">Ações</Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem asChild>
-                                  <Link to={`/ordens/${order.id}`}>
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    Ver Detalhes
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link to={`/ordens/editar/${order.id}`}>
-                                    <Pencil className="h-4 w-4 mr-2" />
-                                    Editar
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => completeServiceOrder(order.id)}
-                                >
-                                  <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                  Finalizar Serviço
-                                </DropdownMenuItem>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem
-                                      onSelect={(e) => e.preventDefault()}
-                                      className="text-destructive"
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Excluir
-                                    </DropdownMenuItem>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Esta ação não pode ser desfeita. Esta OS será excluída permanentemente.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => deleteServiceOrder(order.id)}
-                                        className="bg-destructive text-destructive-foreground"
+                          <div className="flex flex-row sm:flex-col justify-between sm:items-end gap-2">
+                            <p className="font-semibold">{formatCurrency(order.total)}</p>
+                            
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm" asChild className="h-8 w-8 p-0">
+                                <Link to={`/ordens/${order.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-8 w-8 p-0"
+                                onClick={() => completeServiceOrder(order.id)}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-36">
+                                  <DropdownMenuItem asChild>
+                                    <Link to={`/ordens/editar/${order.id}`}>
+                                      <Pencil className="h-4 w-4 mr-2" />
+                                      Editar
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <DropdownMenuItem
+                                        onSelect={(e) => e.preventDefault()}
+                                        className="text-destructive"
                                       >
+                                        <Trash2 className="h-4 w-4 mr-2" />
                                         Excluir
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                                      </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Esta ação não pode ser desfeita. Esta OS será excluída permanentemente.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => deleteServiceOrder(order.id)}
+                                          className="bg-destructive text-destructive-foreground"
+                                        >
+                                          Excluir
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -189,84 +196,80 @@ export default function ServiceOrders() {
           </Card>
         </TabsContent>
         
-        <TabsContent value="draft" className="mt-6">
+        <TabsContent value="draft">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Rascunhos</CardTitle>
+            <CardHeader className="pb-2 px-3 sm:px-6">
+              <CardTitle className="text-lg sm:text-xl">Rascunhos</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6">
               {draftOrders.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-6 text-muted-foreground text-sm">
                   Não há rascunhos de ordens de serviço.
                 </div>
               ) : (
                 <div className="divide-y divide-border">
                   {draftOrders.map((order) => (
-                    <div key={order.id} className="py-4">
-                      <div className="flex flex-col md:flex-row justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <h3 className="font-medium">{order.clientName}</h3>
-                            <Badge variant="outline">Rascunho</Badge>
+                    <div key={order.id} className="py-3 sm:py-4">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                          <div className="space-y-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              <h3 className="font-medium text-base">{order.clientName}</h3>
+                              <Badge variant="outline" className="w-fit text-xs">Rascunho</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {order.vehicle.model} ({order.vehicle.year}) - {order.vehicle.plate}
+                            </p>
+                            <p className="text-xs sm:text-sm">{order.serviceType}</p>
+                            <p className="text-xs">
+                              Criado em {formatDate(order.createdAt)}
+                            </p>
                           </div>
-                          <p className="text-muted-foreground">
-                            {order.vehicle.model} ({order.vehicle.year}) - {order.vehicle.plate}
-                          </p>
-                          <p className="text-sm">{order.serviceType}</p>
-                          <p className="text-sm">
-                            Criado em {formatDate(order.createdAt)}
-                          </p>
-                        </div>
-                        <div className="flex flex-col justify-between items-end gap-2">
-                          <p className="font-semibold">{formatCurrency(order.total)}</p>
-                          <div className="flex gap-2">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">Ações</Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem asChild>
-                                  <Link to={`/ordens/${order.id}`}>
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    Ver Detalhes
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link to={`/ordens/editar/${order.id}`}>
-                                    <Pencil className="h-4 w-4 mr-2" />
-                                    Editar
-                                  </Link>
-                                </DropdownMenuItem>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem
-                                      onSelect={(e) => e.preventDefault()}
-                                      className="text-destructive"
+                          <div className="flex flex-row sm:flex-col justify-between sm:items-end gap-2">
+                            <p className="font-semibold">{formatCurrency(order.total)}</p>
+                            
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm" asChild className="h-8 w-8 p-0">
+                                <Link to={`/ordens/${order.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              
+                              <Button variant="outline" size="sm" asChild className="h-8 w-8 p-0">
+                                <Link to={`/ordens/editar/${order.id}`}>
+                                  <Pencil className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta ação não pode ser desfeita. Esta OS será excluída permanentemente.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteServiceOrder(order.id)}
+                                      className="bg-destructive text-destructive-foreground"
                                     >
-                                      <Trash2 className="h-4 w-4 mr-2" />
                                       Excluir
-                                    </DropdownMenuItem>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Esta ação não pode ser desfeita. Esta OS será excluída permanentemente.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => deleteServiceOrder(order.id)}
-                                        className="bg-destructive text-destructive-foreground"
-                                      >
-                                        Excluir
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -278,41 +281,41 @@ export default function ServiceOrders() {
           </Card>
         </TabsContent>
         
-        <TabsContent value="completed" className="mt-6">
+        <TabsContent value="completed">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Serviços Concluídos</CardTitle>
+            <CardHeader className="pb-2 px-3 sm:px-6">
+              <CardTitle className="text-lg sm:text-xl">Serviços Concluídos</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6">
               {completedOrders.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-6 text-muted-foreground text-sm">
                   Não há ordens de serviço concluídas.
                 </div>
               ) : (
                 <div className="divide-y divide-border">
                   {completedOrders.map((order) => (
-                    <div key={order.id} className="py-4">
-                      <div className="flex flex-col md:flex-row justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <h3 className="font-medium">{order.clientName}</h3>
-                            <Badge variant="success">Concluído</Badge>
+                    <div key={order.id} className="py-3 sm:py-4">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                          <div className="space-y-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              <h3 className="font-medium text-base">{order.clientName}</h3>
+                              <Badge variant="success" className="w-fit text-xs">Concluído</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {order.vehicle.model} ({order.vehicle.year}) - {order.vehicle.plate}
+                            </p>
+                            <p className="text-xs sm:text-sm">{order.serviceType}</p>
+                            <p className="text-xs">
+                              Finalizado em {order.completedAt ? formatDate(order.completedAt) : "N/A"}
+                            </p>
                           </div>
-                          <p className="text-muted-foreground">
-                            {order.vehicle.model} ({order.vehicle.year}) - {order.vehicle.plate}
-                          </p>
-                          <p className="text-sm">{order.serviceType}</p>
-                          <p className="text-sm">
-                            Finalizado em {order.completedAt ? formatDate(order.completedAt) : "N/A"}
-                          </p>
-                        </div>
-                        <div className="flex flex-col justify-between items-end gap-2">
-                          <p className="font-semibold">{formatCurrency(order.total)}</p>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" asChild>
+                          <div className="flex flex-row sm:flex-col justify-between sm:items-end gap-2">
+                            <p className="font-semibold">{formatCurrency(order.total)}</p>
+                            
+                            <Button variant="outline" size="sm" asChild className="h-8 w-8 p-0">
                               <Link to={`/ordens/${order.id}`}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                Ver Detalhes
+                                <Eye className="h-4 w-4" />
                               </Link>
                             </Button>
                           </div>
@@ -326,41 +329,41 @@ export default function ServiceOrders() {
           </Card>
         </TabsContent>
         
-        <TabsContent value="canceled" className="mt-6">
+        <TabsContent value="canceled">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Serviços Cancelados</CardTitle>
+            <CardHeader className="pb-2 px-3 sm:px-6">
+              <CardTitle className="text-lg sm:text-xl">Serviços Cancelados</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6">
               {canceledOrders.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-6 text-muted-foreground text-sm">
                   Não há ordens de serviço canceladas.
                 </div>
               ) : (
                 <div className="divide-y divide-border">
                   {canceledOrders.map((order) => (
-                    <div key={order.id} className="py-4">
-                      <div className="flex flex-col md:flex-row justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <h3 className="font-medium">{order.clientName}</h3>
-                            <Badge variant="destructive">Cancelado</Badge>
+                    <div key={order.id} className="py-3 sm:py-4">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                          <div className="space-y-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              <h3 className="font-medium text-base">{order.clientName}</h3>
+                              <Badge variant="destructive" className="w-fit text-xs">Cancelado</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {order.vehicle.model} ({order.vehicle.year}) - {order.vehicle.plate}
+                            </p>
+                            <p className="text-xs sm:text-sm">{order.serviceType}</p>
+                            <p className="text-xs">
+                              Cancelado em {formatDate(order.updatedAt)}
+                            </p>
                           </div>
-                          <p className="text-muted-foreground">
-                            {order.vehicle.model} ({order.vehicle.year}) - {order.vehicle.plate}
-                          </p>
-                          <p className="text-sm">{order.serviceType}</p>
-                          <p className="text-sm">
-                            Cancelado em {formatDate(order.updatedAt)}
-                          </p>
-                        </div>
-                        <div className="flex flex-col justify-between items-end gap-2">
-                          <p className="font-semibold">{formatCurrency(order.total)}</p>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" asChild>
+                          <div className="flex flex-row sm:flex-col justify-between sm:items-end gap-2">
+                            <p className="font-semibold">{formatCurrency(order.total)}</p>
+                            
+                            <Button variant="outline" size="sm" asChild className="h-8 w-8 p-0">
                               <Link to={`/ordens/${order.id}`}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                Ver Detalhes
+                                <Eye className="h-4 w-4" />
                               </Link>
                             </Button>
                           </div>

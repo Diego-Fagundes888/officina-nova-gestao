@@ -530,13 +530,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteExpense = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('expenses')
-        .delete()
-        .eq('id', id);
+      // Verificar se o ID é do Supabase (UUID) ou é um ID mock
+      if (id.length === 36 && id.includes('-')) {
+        // É um UUID válido, tenta excluir no Supabase
+        const { error } = await supabase
+          .from('expenses')
+          .delete()
+          .eq('id', id);
       
-      if (error) throw error;
+        if (error) throw error;
+      }
       
+      // Independentemente se é do Supabase ou mock, removemos do estado local
       setExpenses(expenses.filter(expense => expense.id !== id));
       toast.success("Despesa excluída!");
     } catch (error: any) {

@@ -27,10 +27,10 @@ export default function RevenueHistory() {
   };
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center text-xl font-semibold">
-          <CheckCircle className="mr-2 h-5 w-5" />
+        <CardTitle className="flex items-center text-lg sm:text-xl font-semibold">
+          <CheckCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
           Histórico de Receitas
         </CardTitle>
       </CardHeader>
@@ -40,24 +40,24 @@ export default function RevenueHistory() {
             Nenhum serviço finalizado até o momento.
           </p>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border overflow-x-auto">
             {completedOrders.map((order) => {
               const datetime = order.completedAt ? formatDateTime(order.completedAt) : { date: "-", time: "-" };
               
               return (
-                <div key={order.id} className="py-4 first:pt-0 last:pb-0">
+                <div key={order.id} className="py-3 sm:py-4 first:pt-0 last:pb-0">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h4 className="font-medium">{order.clientName}</h4>
-                        <span className="text-xs px-2 py-0.5 bg-secondary rounded-full">
+                        <h4 className="font-medium text-sm sm:text-base">{order.clientName}</h4>
+                        <span className="text-xs px-2 py-0.5 bg-secondary rounded-full truncate max-w-[150px] sm:max-w-none">
                           {order.vehicle.model} ({order.vehicle.plate})
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground">{order.serviceType}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{order.serviceType}</p>
                     </div>
-                    <div className="flex flex-col items-end mt-2 sm:mt-0">
-                      <p className="font-semibold text-green-500">
+                    <div className="flex flex-col items-end mt-1 sm:mt-0">
+                      <p className="font-semibold text-green-500 text-sm sm:text-base">
                         {formatCurrency(order.total)}
                       </p>
                       <p className="text-xs text-muted-foreground">
