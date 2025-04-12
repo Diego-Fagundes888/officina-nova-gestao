@@ -1,4 +1,5 @@
 
+
 export enum ServiceStatus {
   DRAFT = "RASCUNHO",
   IN_PROGRESS = "EM_ANDAMENTO",
@@ -11,6 +12,7 @@ export interface Part {
   name: string;
   price: number;
   quantity: number;
+  inventory_item_id?: string;
 }
 
 export interface ServiceOrder {
@@ -34,8 +36,10 @@ export interface ServiceOrder {
 export interface InventoryItem {
   id: string;
   name: string;
-  purchasePrice: number;
+  purchase_price: number;
+  selling_price: number;
   stock: number;
+  min_stock: number;
 }
 
 export interface Appointment {
@@ -59,3 +63,4 @@ export interface Expense {
   date: string;
   category: string;
 }
+

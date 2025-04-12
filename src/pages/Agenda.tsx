@@ -1,8 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Appointment } from "@/types";
-import { generateId } from "@/utils/mockData";
 import { Calendar, Clock, PlusCircle } from "lucide-react";
 import { 
   Dialog,
@@ -34,13 +33,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Agenda() {
-  const { appointments, addAppointment, deleteAppointment } = useApp();
+  const { appointments, setAppointments } = useApp();
   const navigate = useNavigate();
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [newAppointment, setNewAppointment] = useState<{
     clientName: string;
@@ -60,7 +62,47 @@ export default function Agenda() {
     notes: "",
   });
   
-  const handleCreateAppointment = () => {
+  // Carregar agendamentos do Supabase
+  useEffect(() => {
+    async function fetchAppointments() {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('appointments')
+          .select('*')
+          .order('date, time');
+        
+        if (error) throw error;
+        
+        if (data) {
+          const formattedAppointments = data.map(app => ({
+            id: app.id,
+            clientName: app.client_name,
+            vehicle: {
+              model: app.vehicle_model,
+              year: app.vehicle_year,
+              plate: app.vehicle_plate,
+            },
+            serviceType: app.service_type,
+            date: app.date,
+            time: app.time,
+            notes: app.notes,
+          }));
+          
+          setAppointments(formattedAppointments);
+        }
+      } catch (error: any) {
+        console.error("Erro ao carregar agendamentos:", error);
+        toast.error(`Erro ao carregar agendamentos: ${error.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchAppointments();
+  }, [setAppointments]);
+  
+  const handleCreateAppointment = async () => {
     if (
       selectedDate &&
       newAppointment.clientName &&
@@ -68,37 +110,65 @@ export default function Agenda() {
       newAppointment.serviceType &&
       newAppointment.time
     ) {
-      const appointment: Omit<Appointment, "id"> = {
-        clientName: newAppointment.clientName,
-        vehicle: {
-          model: newAppointment.vehicleModel,
-          year: newAppointment.vehicleYear,
-          plate: newAppointment.vehiclePlate,
-        },
-        serviceType: newAppointment.serviceType,
-        date: selectedDate.toISOString(),
-        time: newAppointment.time,
-        notes: newAppointment.notes || undefined,
-      };
-      
-      addAppointment(appointment);
-      
-      setNewAppointment({
-        clientName: "",
-        vehicleModel: "",
-        vehicleYear: "",
-        vehiclePlate: "",
-        serviceType: "",
-        time: "",
-        notes: "",
-      });
-      
-      setIsDialogOpen(false);
+      try {
+        const appointmentData = {
+          client_name: newAppointment.clientName,
+          vehicle_model: newAppointment.vehicleModel,
+          vehicle_year: newAppointment.vehicleYear,
+          vehicle_plate: newAppointment.vehiclePlate,
+          service_type: newAppointment.serviceType,
+          date: selectedDate.toISOString().split('T')[0],
+          time: newAppointment.time,
+          notes: newAppointment.notes || null,
+        };
+        
+        const { data, error } = await supabase
+          .from('appointments')
+          .insert(appointmentData)
+          .select('*')
+          .single();
+          
+        if (error) throw error;
+        
+        const newAppointmentFormatted: Appointment = {
+          id: data.id,
+          clientName: data.client_name,
+          vehicle: {
+            model: data.vehicle_model,
+            year: data.vehicle_year,
+            plate: data.vehicle_plate,
+          },
+          serviceType: data.service_type,
+          date: data.date,
+          time: data.time,
+          notes: data.notes,
+        };
+        
+        setAppointments([...appointments, newAppointmentFormatted]);
+        toast.success("Agendamento criado com sucesso!");
+        
+        setNewAppointment({
+          clientName: "",
+          vehicleModel: "",
+          vehicleYear: "",
+          vehiclePlate: "",
+          serviceType: "",
+          time: "",
+          notes: "",
+        });
+        
+        setIsDialogOpen(false);
+      } catch (error: any) {
+        console.error("Erro ao criar agendamento:", error);
+        toast.error(`Erro ao criar agendamento: ${error.message}`);
+      }
+    } else {
+      toast.error("Preencha todos os campos obrigatórios");
     }
   };
   
   const createServiceOrderFromAppointment = (appointment: Appointment) => {
-    // Navigate to the create order page with appointment data
+    // Passar os dados do agendamento para a página de criação de ordem de serviço
     navigate("/ordens/nova", {
       state: {
         clientName: appointment.clientName,
@@ -110,11 +180,28 @@ export default function Agenda() {
     });
   };
   
+  const deleteAppointment = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setAppointments(appointments.filter(item => item.id !== id));
+      toast.success("Agendamento excluído com sucesso!");
+    } catch (error: any) {
+      console.error("Erro ao excluir agendamento:", error);
+      toast.error(`Erro ao excluir agendamento: ${error.message}`);
+    }
+  };
+  
   const getAppointmentsForDate = (date: Date | undefined) => {
     if (!date) return [];
     
     return appointments.filter((appointment) => {
-      const appointmentDate = parseISO(appointment.date);
+      const appointmentDate = new Date(appointment.date);
       return isSameDay(appointmentDate, date);
     });
   };
@@ -122,7 +209,7 @@ export default function Agenda() {
   const filteredAppointments = getAppointmentsForDate(selectedDate);
   
   const formatAppointmentDate = (date: string) => {
-    return format(parseISO(date), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
+    return format(new Date(date), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
   };
   
   const formatTime = (time: string) => {
@@ -291,7 +378,9 @@ export default function Agenda() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {filteredAppointments.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8">Carregando agendamentos...</div>
+            ) : filteredAppointments.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 Não há agendamentos para esta data.
               </div>
@@ -362,7 +451,9 @@ export default function Agenda() {
           <CardTitle>Próximos Agendamentos</CardTitle>
         </CardHeader>
         <CardContent>
-          {appointments.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-8">Carregando agendamentos...</div>
+          ) : appointments.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Não há agendamentos futuros.
             </div>
@@ -387,6 +478,13 @@ export default function Agenda() {
                         </p>
                         <p className="text-sm">{appointment.serviceType}</p>
                       </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => createServiceOrderFromAppointment(appointment)}
+                      >
+                        Criar OS
+                      </Button>
                     </div>
                   </div>
                 ))}

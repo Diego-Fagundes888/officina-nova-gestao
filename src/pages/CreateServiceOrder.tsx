@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,15 +11,20 @@ import { Part, ServiceOrder, ServiceStatus } from "@/types";
 import { useApp } from "@/context/AppContext";
 import { Plus, Trash2, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
+import InventoryItemSelector from "@/components/InventoryItemSelector";
 
 export default function CreateServiceOrder() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { serviceOrders, addServiceOrder, updateServiceOrder } = useApp();
   
   const existingOrder = id 
     ? serviceOrders.find(order => order.id === id) 
     : null;
+  
+  // Tentar obter dados do agendamento se veio da página de agenda
+  const appointmentData = location.state || {};
   
   const [formData, setFormData] = useState<{
     clientName: string;
@@ -30,11 +35,11 @@ export default function CreateServiceOrder() {
     parts: Part[];
     laborCost: number;
   }>({
-    clientName: existingOrder?.clientName || "",
-    vehicleModel: existingOrder?.vehicle.model || "",
-    vehicleYear: existingOrder?.vehicle.year || "",
-    vehiclePlate: existingOrder?.vehicle.plate || "",
-    serviceType: existingOrder?.serviceType || "",
+    clientName: existingOrder?.clientName || appointmentData.clientName || "",
+    vehicleModel: existingOrder?.vehicle.model || appointmentData.vehicleModel || "",
+    vehicleYear: existingOrder?.vehicle.year || appointmentData.vehicleYear || "",
+    vehiclePlate: existingOrder?.vehicle.plate || appointmentData.vehiclePlate || "",
+    serviceType: existingOrder?.serviceType || appointmentData.serviceType || "",
     parts: existingOrder?.parts || [],
     laborCost: existingOrder?.laborCost || 0,
   });
@@ -80,6 +85,16 @@ export default function CreateServiceOrder() {
     });
   };
   
+  const addPartFromInventory = (part: Omit<Part, "id">) => {
+    setFormData({
+      ...formData,
+      parts: [
+        ...formData.parts,
+        { ...part, id: generateId() },
+      ],
+    });
+  };
+  
   const updatePart = (id: string, field: keyof Part, value: string | number) => {
     setFormData({
       ...formData,
@@ -101,11 +116,11 @@ export default function CreateServiceOrder() {
     });
   };
   
-  const handleSubmit = (status: ServiceStatus) => {
+  const handleSubmit = async (status: ServiceStatus) => {
     const total = calculateTotal();
     
     if (existingOrder) {
-      updateServiceOrder(existingOrder.id, {
+      await updateServiceOrder(existingOrder.id, {
         clientName: formData.clientName,
         vehicle: {
           model: formData.vehicleModel,
@@ -133,7 +148,7 @@ export default function CreateServiceOrder() {
         status,
       };
       
-      addServiceOrder(newOrder);
+      await addServiceOrder(newOrder);
     }
     
     navigate("/ordens");
@@ -227,15 +242,18 @@ export default function CreateServiceOrder() {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-medium">Peças</h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addPart}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Peça
-                </Button>
+                <div className="flex gap-2">
+                  <InventoryItemSelector onAddPart={addPartFromInventory} />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addPart}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Peça Manual
+                  </Button>
+                </div>
               </div>
               
               {formData.parts.length === 0 ? (
