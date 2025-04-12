@@ -10,6 +10,7 @@ interface AppContextProps {
   appointments: Appointment[];
   inventory: InventoryItem[];
   expenses: Expense[];
+  setAppointments: (appointments: Appointment[]) => void;
   addServiceOrder: (order: Omit<ServiceOrder, "id" | "createdAt" | "updatedAt">) => Promise<void>;
   updateServiceOrder: (id: string, order: Partial<ServiceOrder>) => Promise<void>;
   deleteServiceOrder: (id: string) => Promise<void>;

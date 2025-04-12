@@ -1,4 +1,3 @@
-
 import { ServiceOrder, ServiceStatus, InventoryItem, Appointment, Expense } from "@/types";
 import { addDays, format } from "date-fns";
 
@@ -100,32 +99,42 @@ export const mockInventory: InventoryItem[] = [
   {
     id: generateId(),
     name: "Óleo 5W30 (1L)",
-    purchasePrice: 25,
+    purchase_price: 25,
+    selling_price: 35,
     stock: 20,
+    min_stock: 5
   },
   {
     id: generateId(),
     name: "Filtro de óleo universal",
-    purchasePrice: 18,
+    purchase_price: 18,
+    selling_price: 25,
     stock: 15,
+    min_stock: 5
   },
   {
     id: generateId(),
     name: "Filtro de ar universal",
-    purchasePrice: 35,
+    purchase_price: 35,
+    selling_price: 50,
     stock: 10,
+    min_stock: 5
   },
   {
     id: generateId(),
     name: "Pastilhas de freio dianteiras",
-    purchasePrice: 120,
+    purchase_price: 120,
+    selling_price: 180,
     stock: 6,
+    min_stock: 5
   },
   {
     id: generateId(),
     name: "Fluido de freio DOT4 (500ml)",
-    purchasePrice: 30,
+    purchase_price: 30,
+    selling_price: 45,
     stock: 8,
+    min_stock: 5
   },
 ];
 
