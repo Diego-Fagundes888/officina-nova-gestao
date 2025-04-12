@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { ServiceOrder, Appointment, InventoryItem, Expense, ServiceStatus } from "@/types";
 import { mockServiceOrders, mockAppointments, mockExpenses, generateId } from "@/utils/mockData";
@@ -36,18 +35,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Carregar dados do Supabase na inicialização
   useEffect(() => {
     async function fetchInitialData() {
       try {
-        // Buscar ordens de serviço
         const { data: serviceOrdersData, error: serviceOrdersError } = await supabase
           .from('service_orders')
           .select('*');
         
         if (serviceOrdersError) throw serviceOrdersError;
         
-        // Para cada ordem de serviço, buscar as peças relacionadas
         if (serviceOrdersData) {
           const ordersWithParts = await Promise.all(
             serviceOrdersData.map(async (order) => {
@@ -58,7 +54,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
               
               if (partsError) throw partsError;
               
-              // Converter do formato do banco para o formato da aplicação
               return {
                 id: order.id,
                 clientName: order.client_name,
@@ -87,11 +82,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           
           setServiceOrders(ordersWithParts);
         } else {
-          // Fallback para dados mockados se não houver dados no banco
           setServiceOrders(mockServiceOrders);
         }
         
-        // Buscar inventário
         const { data: inventoryData, error: inventoryError } = await supabase
           .from('inventory_items')
           .select('*');
@@ -102,7 +95,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setInventory(inventoryData);
         }
         
-        // Buscar agendamentos
         const { data: appointmentsData, error: appointmentsError } = await supabase
           .from('appointments')
           .select('*');
@@ -129,7 +121,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setAppointments(mockAppointments);
         }
         
-        // Buscar despesas
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
           .select('*');
@@ -146,7 +137,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         console.error("Erro ao carregar dados iniciais:", error);
         toast.error(`Erro ao carregar dados: ${error.message}`);
         
-        // Usar dados mockados em caso de erro
         setServiceOrders(mockServiceOrders);
         setAppointments(mockAppointments);
         setExpenses(mockExpenses);
@@ -160,7 +150,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addServiceOrder = async (order: Omit<ServiceOrder, "id" | "createdAt" | "updatedAt">) => {
     try {
-      // Converter do formato da aplicação para o formato do banco
       const orderData = {
         client_name: order.clientName,
         vehicle_model: order.vehicle.model,
@@ -172,7 +161,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         status: order.status,
       };
       
-      // Inserir a ordem de serviço
       const { data: newOrder, error: orderError } = await supabase
         .from('service_orders')
         .insert(orderData)
@@ -181,7 +169,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (orderError) throw orderError;
       
-      // Inserir as peças da ordem
       if (order.parts.length > 0) {
         const partsData = order.parts.map(part => ({
           service_order_id: newOrder.id,
@@ -197,7 +184,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         
         if (partsError) throw partsError;
         
-        // Atualizar o estoque para cada peça
         for (const part of order.parts) {
           if (part.inventory_item_id) {
             const { data: inventoryItem } = await supabase
@@ -216,7 +202,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       }
       
-      // Atualizar o estado da aplicação
       const formattedOrder: ServiceOrder = {
         id: newOrder.id,
         clientName: newOrder.client_name,
@@ -260,7 +245,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       orderData.updated_at = new Date().toISOString();
       
-      // Atualizar a ordem de serviço
       if (Object.keys(orderData).length > 0) {
         const { error: orderError } = await supabase
           .from('service_orders')
@@ -270,9 +254,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (orderError) throw orderError;
       }
       
-      // Atualizar as peças se fornecidas
       if (orderUpdate.parts) {
-        // Remover peças antigas
         const { error: deleteError } = await supabase
           .from('service_order_parts')
           .delete()
@@ -280,7 +262,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         
         if (deleteError) throw deleteError;
         
-        // Adicionar novas peças
         if (orderUpdate.parts.length > 0) {
           const partsData = orderUpdate.parts.map(part => ({
             service_order_id: id,
@@ -298,7 +279,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       }
       
-      // Atualizar o estado da aplicação
       setServiceOrders(serviceOrders.map(order => 
         order.id === id 
           ? { ...order, ...orderUpdate, updatedAt: new Date().toISOString() } 
@@ -314,7 +294,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteServiceOrder = async (id: string) => {
     try {
-      // Excluir a ordem de serviço (vai excluir automaticamente as peças associadas devido à constraint ON DELETE CASCADE)
       const { error } = await supabase
         .from('service_orders')
         .delete()
@@ -322,7 +301,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Atualizar o estado da aplicação
       setServiceOrders(serviceOrders.filter(item => item.id !== id));
       toast.success("Ordem de serviço excluída!");
     } catch (error: any) {
@@ -335,7 +313,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const now = new Date().toISOString();
       
-      // Atualizar o status da ordem de serviço para COMPLETED e definir completedAt
       const { error } = await supabase
         .from('service_orders')
         .update({
@@ -347,7 +324,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Atualizar o estado da aplicação
       setServiceOrders(serviceOrders.map(order => 
         order.id === id 
           ? { 
@@ -368,7 +344,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addAppointment = async (appointment: Omit<Appointment, "id">) => {
     try {
-      // Converter do formato da aplicação para o formato do banco
       const appointmentData = {
         client_name: appointment.clientName,
         vehicle_model: appointment.vehicle.model,
@@ -380,7 +355,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         notes: appointment.notes || null,
       };
       
-      // Inserir o agendamento
       const { data, error } = await supabase
         .from('appointments')
         .insert(appointmentData)
@@ -389,7 +363,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Atualizar o estado da aplicação
       const newAppointment: Appointment = {
         id: data.id,
         clientName: data.client_name,
@@ -427,7 +400,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (appointmentUpdate.time) appointmentData.time = appointmentUpdate.time;
       if (appointmentUpdate.notes !== undefined) appointmentData.notes = appointmentUpdate.notes;
       
-      // Atualizar o agendamento
       const { error } = await supabase
         .from('appointments')
         .update(appointmentData)
@@ -435,7 +407,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Atualizar o estado da aplicação
       setAppointments(appointments.map(item => 
         item.id === id ? { ...item, ...appointmentUpdate } : item
       ));
@@ -449,7 +420,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteAppointment = async (id: string) => {
     try {
-      // Excluir o agendamento
       const { error } = await supabase
         .from('appointments')
         .delete()
@@ -457,7 +427,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Atualizar o estado da aplicação
       setAppointments(appointments.filter(item => item.id !== id));
       toast.success("Agendamento excluído!");
     } catch (error: any) {
@@ -468,7 +437,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addInventoryItem = async (item: Omit<InventoryItem, "id">) => {
     try {
-      // Inserir o item no inventário
       const { data, error } = await supabase
         .from('inventory_items')
         .insert(item)
@@ -477,7 +445,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Atualizar o estado da aplicação
       setInventory([...inventory, data]);
       toast.success("Item de estoque adicionado!");
     } catch (error: any) {
@@ -488,7 +455,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateInventoryItem = async (id: string, itemUpdate: Partial<InventoryItem>) => {
     try {
-      // Atualizar o item no inventário
       const { error } = await supabase
         .from('inventory_items')
         .update(itemUpdate)
@@ -496,7 +462,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Atualizar o estado da aplicação
       setInventory(inventory.map(item => 
         item.id === id ? { ...item, ...itemUpdate } : item
       ));
@@ -510,7 +475,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteInventoryItem = async (id: string) => {
     try {
-      // Excluir o item do inventário
       const { error } = await supabase
         .from('inventory_items')
         .delete()
@@ -518,7 +482,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Atualizar o estado da aplicação
       setInventory(inventory.filter(item => item.id !== id));
       toast.success("Item de estoque excluído!");
     } catch (error: any) {
@@ -529,7 +492,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addExpense = async (expense: Omit<Expense, "id">) => {
     try {
-      // Inserir a despesa
       const { data, error } = await supabase
         .from('expenses')
         .insert(expense)
@@ -538,7 +500,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Atualizar o estado da aplicação
       setExpenses([...expenses, data]);
       toast.success("Despesa adicionada com sucesso!");
     } catch (error: any) {
@@ -549,7 +510,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateExpense = async (id: string, expenseUpdate: Partial<Expense>) => {
     try {
-      // Atualizar a despesa
       const { error } = await supabase
         .from('expenses')
         .update(expenseUpdate)
@@ -557,7 +517,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Atualizar o estado da aplicação
       setExpenses(expenses.map(expense => 
         expense.id === id ? { ...expense, ...expenseUpdate } : expense
       ));
@@ -571,7 +530,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteExpense = async (id: string) => {
     try {
-      // Excluir a despesa
       const { error } = await supabase
         .from('expenses')
         .delete()
@@ -579,7 +537,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Atualizar o estado da aplicação
       setExpenses(expenses.filter(expense => expense.id !== id));
       toast.success("Despesa excluída!");
     } catch (error: any) {
@@ -595,6 +552,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         appointments,
         inventory,
         expenses,
+        setAppointments,
         addServiceOrder,
         updateServiceOrder,
         deleteServiceOrder,
