@@ -3,7 +3,7 @@ import CardStats from "@/components/CardStats";
 import { useApp } from "@/context/AppContext";
 import { ServiceStatus } from "@/types";
 import { formatCurrency, getDailyRevenue } from "@/utils/mockData";
-import { BarChart3, Car, Clock, DollarSign, Tool, Wrench } from "lucide-react";
+import { BarChart3, Car, Clock, DollarSign, Wrench, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,7 @@ export default function Dashboard() {
         <CardStats 
           title="Serviços Concluídos Hoje" 
           value={String(completedToday.length)}
-          icon={Tool}
+          icon={CheckCircle}
           description="Finalizados no dia de hoje"
         />
         

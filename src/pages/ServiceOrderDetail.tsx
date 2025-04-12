@@ -1,4 +1,3 @@
-
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { formatCurrency } from "@/utils/mockData";
@@ -9,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowLeft, Calendar, Car, Clock, Pencil, Tool, UserCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Car, Clock, Pencil, Wrench, UserCircle } from "lucide-react";
 
 const statusLabels = {
   [ServiceStatus.DRAFT]: {
@@ -151,7 +150,7 @@ export default function ServiceOrderDetail() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center">
-            <Tool className="h-5 w-5 mr-2" />
+            <Wrench className="h-5 w-5 mr-2" />
             Peças e Serviços
           </CardTitle>
         </CardHeader>
