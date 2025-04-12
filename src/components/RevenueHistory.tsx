@@ -41,7 +41,7 @@ export default function RevenueHistory() {
   return (
     <Card className="w-full">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center text-lg sm:text-xl font-semibold">
+        <CardTitle className="flex items-center text-base sm:text-lg font-semibold">
           <CheckCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
           Histórico de Receitas
         </CardTitle>
@@ -57,19 +57,19 @@ export default function RevenueHistory() {
               const datetime = order.completedAt ? formatDateTime(order.completedAt) : { date: "-", time: "-" };
               
               return (
-                <div key={order.id} className="py-3 sm:py-4 first:pt-0 last:pb-0">
+                <div key={order.id} className="py-2 sm:py-3 first:pt-0 last:pb-0">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h4 className="font-medium text-sm sm:text-base">{order.clientName}</h4>
-                        <span className="text-xs px-2 py-0.5 bg-secondary rounded-full truncate max-w-[150px] sm:max-w-none">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                        <h4 className="font-medium text-xs sm:text-sm">{order.clientName}</h4>
+                        <span className="text-xs px-1.5 py-0.5 bg-secondary rounded-full truncate max-w-[120px] sm:max-w-none">
                           {order.vehicle.model} ({order.vehicle.plate})
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-muted-foreground">{order.serviceType}</p>
+                      <p className="text-xs text-muted-foreground">{order.serviceType}</p>
                     </div>
-                    <div className="flex items-center gap-2 mt-1 sm:mt-0">
-                      <p className="font-semibold text-green-500 text-sm sm:text-base">
+                    <div className="flex items-center gap-1 sm:gap-2 mt-1 sm:mt-0">
+                      <p className="font-semibold text-green-500 text-xs sm:text-sm">
                         {formatCurrency(order.total)}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -81,7 +81,7 @@ export default function RevenueHistory() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-6 w-6 sm:h-8 sm:w-8 text-red-500 hover:text-red-700 hover:bg-red-100"
+                            className="h-5 w-5 sm:h-7 sm:w-7 text-red-500 hover:text-red-700 hover:bg-red-100"
                           >
                             <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
