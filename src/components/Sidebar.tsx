@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -8,7 +7,8 @@ import {
   PieChart, 
   Package, 
   Menu, 
-  X 
+  X,
+  Car 
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Ordens de Serviço', href: '/ordens', icon: FileText },
   { name: 'Histórico', href: '/historico', icon: Clock },
+  { name: 'Histórico de Veículos', href: '/historico-veiculo', icon: Car },
   { name: 'Agenda', href: '/agenda', icon: Calendar },
   { name: 'Financeiro', href: '/financeiro', icon: PieChart },
   { name: 'Peças', href: '/pecas', icon: Package },
