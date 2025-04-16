@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -22,6 +21,7 @@ export interface Database {
           time: string
           notes: string | null
           created_at: string
+          status: string
         }
         Insert: {
           id?: string
@@ -34,6 +34,7 @@ export interface Database {
           time: string
           notes?: string | null
           created_at?: string
+          status?: string
         }
         Update: {
           id?: string
@@ -46,6 +47,7 @@ export interface Database {
           time?: string
           notes?: string | null
           created_at?: string
+          status?: string
         }
         Relationships: []
       }

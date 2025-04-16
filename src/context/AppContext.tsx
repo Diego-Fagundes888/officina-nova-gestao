@@ -721,6 +721,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateAppointmentStatus = async (id: string, status: AppointmentStatus) => {
     try {
+      const currentAppointment = appointments.find(app => app.id === id);
+      if (!currentAppointment) {
+        throw new Error("Appointment not found");
+      }
+      
       const { error } = await supabase
         .from('appointments')
         .update({ status })
@@ -732,15 +737,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
         app.id === id ? { ...app, status } : app
       ));
       
-      const { error: historyError } = await supabase
-        .from('appointment_status_history')
-        .insert({
-          appointment_id: id,
-          previous_status: appointments.find(app => app.id === id)?.status,
-          new_status: status
-        });
-      
-      if (historyError) throw historyError;
+      // Record the status change in history
+      // Note: Only run this if the appointment_status_history table exists
+      try {
+        const { error: historyError } = await supabase
+          .from('appointment_status_history')
+          .insert({
+            appointment_id: id,
+            previous_status: currentAppointment.status,
+            new_status: status
+          });
+        
+        if (historyError) console.error("Error recording status history:", historyError);
+      } catch (historyError) {
+        console.error("Error accessing appointment_status_history table:", historyError);
+      }
       
       toast.success(`Status do agendamento atualizado para ${status}`);
     } catch (error: any) {

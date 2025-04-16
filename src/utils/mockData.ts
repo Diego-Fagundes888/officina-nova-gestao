@@ -1,5 +1,4 @@
-
-import { ServiceOrder, ServiceStatus, InventoryItem, Appointment, Expense } from "@/types";
+import { ServiceOrder, ServiceStatus, InventoryItem, Appointment, Expense, AppointmentStatus } from "@/types";
 import { addDays, format } from "date-fns";
 
 // Generate random ID
@@ -153,6 +152,7 @@ export const mockAppointments: Appointment[] = [
     date: addDays(new Date(), 1).toISOString(),
     time: "09:30",
     notes: "Cliente solicitou uso de óleo sintético",
+    status: AppointmentStatus.AGENDADO,
   },
   {
     id: generateId(),
@@ -165,6 +165,7 @@ export const mockAppointments: Appointment[] = [
     serviceType: "Revisão de 40.000km",
     date: addDays(new Date(), 2).toISOString(),
     time: "14:00",
+    status: AppointmentStatus.AGENDADO,
   },
   {
     id: generateId(),
@@ -177,6 +178,7 @@ export const mockAppointments: Appointment[] = [
     serviceType: "Reparo no ar condicionado",
     date: addDays(new Date(), 2).toISOString(),
     time: "16:30",
+    status: AppointmentStatus.AGENDADO,
   },
 ];
 
