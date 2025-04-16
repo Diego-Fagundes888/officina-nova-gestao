@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AppointmentServiceOrderModal } from "@/components/AppointmentServiceOrderModal";
 
 export default function Agenda() {
   const { 
@@ -64,6 +65,9 @@ export default function Agenda() {
     time: "",
     notes: "",
   });
+  
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isServiceOrderModalOpen, setIsServiceOrderModalOpen] = useState(false);
   
   useEffect(() => {
     async function fetchAppointments() {
@@ -233,6 +237,11 @@ export default function Agenda() {
       default:
         return "bg-blue-500";
     }
+  };
+  
+  const handleStartService = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsServiceOrderModalOpen(true);
   };
   
   return (
@@ -433,10 +442,7 @@ export default function Agenda() {
                         <div className="flex gap-2">
                           {appointment.status === AppointmentStatus.AGENDADO && (
                             <Button
-                              onClick={() => updateAppointmentStatus(
-                                appointment.id, 
-                                AppointmentStatus.EM_ANDAMENTO
-                              )}
+                              onClick={() => handleStartService(appointment)}
                             >
                               Iniciar Serviço
                             </Button>
@@ -545,6 +551,14 @@ export default function Agenda() {
           )}
         </CardContent>
       </Card>
+      
+      {selectedAppointment && (
+        <AppointmentServiceOrderModal
+          appointment={selectedAppointment}
+          isOpen={isServiceOrderModalOpen}
+          onClose={() => setIsServiceOrderModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
