@@ -371,13 +371,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      await addVehicleService({
+      const serviceData = {
         vehicle_id: order.vehicle.plate,
         service_type: order.serviceType,
         description: `Ordem de Serviço #${id.substring(0, 8)}`,
         notes: `Mão de obra: ${order.laborCost}. Peças incluídas: ${order.parts.map(p => p.name).join(', ')}`,
         service_date: now,
-        price: order.total,
+        price: order.total
+      };
+      
+      await addVehicleService({
+        ...serviceData,
         client_name: order.clientName
       });
       
@@ -436,12 +440,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         notes: data.notes,
       };
       
-      await addVehicleService({
+      const serviceData = {
         vehicle_id: appointment.vehicle.plate,
         service_type: "Agendamento: " + appointment.serviceType,
         description: `Agendamento para ${appointment.date} às ${appointment.time}`,
         notes: appointment.notes || "Sem observações",
-        service_date: new Date().toISOString(),
+        service_date: new Date().toISOString()
+      };
+      
+      await addVehicleService({
+        ...serviceData,
         client_name: appointment.clientName
       });
       
@@ -632,27 +640,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addVehicleService = async (service: Omit<VehicleService, "id" | "created_at">) => {
     try {
+      await getOrCreateVehicle(service.vehicle_id, "", "");
+      
+      const { client_name, ...serviceData } = service;
+      
       const { data, error } = await supabase
         .from('vehicle_services')
-        .insert(service)
+        .insert(serviceData)
         .select('*')
         .single();
       
       if (error) throw error;
       
-      setVehicleServices([...vehicleServices, data]);
+      const fullServiceData = { ...data, client_name: client_name || "" };
+      
+      setVehicleServices([...vehicleServices, fullServiceData]);
       toast.success("Serviço adicionado ao histórico do veículo!");
+      
+      return fullServiceData;
     } catch (error: any) {
       console.error("Erro ao adicionar serviço:", error);
       toast.error(`Erro ao adicionar serviço: ${error.message}`);
+      throw error;
     }
   };
 
   const updateVehicleService = async (id: string, serviceUpdate: Partial<VehicleService>) => {
     try {
+      const { client_name, ...serviceData } = serviceUpdate;
+      
       const { error } = await supabase
         .from('vehicle_services')
-        .update(serviceUpdate)
+        .update(serviceData)
         .eq('id', id);
       
       if (error) throw error;

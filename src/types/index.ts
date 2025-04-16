@@ -65,7 +65,7 @@ export interface Expense {
 
 export interface VehicleService {
   id: string;
-  vehicle_id: string; // Agora estamos usando a placa como vehicle_id
+  vehicle_id: string; // Usando a placa como vehicle_id
   service_type: string;
   description?: string;
   notes?: string;
@@ -73,7 +73,7 @@ export interface VehicleService {
   price?: number;
   mechanic_name?: string;
   created_at: string;
-  client_name?: string; // Adicionando nome do cliente
+  client_name: string; // Mudando de opcional para obrigatório
 }
 
 export interface Vehicle {

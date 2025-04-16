@@ -120,6 +120,7 @@ export default function VehicleServiceForm({ service }: VehicleServiceFormProps)
       const serviceData = {
         ...formData,
         price: formData.price ? parseFloat(formData.price) : undefined,
+        client_name: formData.client_name || "Cliente não informado", // Garantir que client_name tem um valor padrão
       };
       
       if (service) {
