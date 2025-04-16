@@ -9,6 +9,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointment_status_history: {
+        Row: {
+          appointment_id: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_status: string
+          previous_status: string | null
+        }
+        Insert: {
+          appointment_id: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status: string
+          previous_status?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status?: string
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_status_history_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           client_name: string
@@ -17,6 +52,7 @@ export type Database = {
           id: string
           notes: string | null
           service_type: string
+          status: string
           time: string
           vehicle_model: string
           vehicle_plate: string
@@ -29,6 +65,7 @@ export type Database = {
           id?: string
           notes?: string | null
           service_type: string
+          status?: string
           time: string
           vehicle_model: string
           vehicle_plate: string
@@ -41,6 +78,7 @@ export type Database = {
           id?: string
           notes?: string | null
           service_type?: string
+          status?: string
           time?: string
           vehicle_model?: string
           vehicle_plate?: string

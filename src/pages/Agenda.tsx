@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
-import { Appointment } from "@/types";
+import { Appointment, AppointmentStatus } from "@/types";
 import { Calendar, Clock, PlusCircle } from "lucide-react";
 import { 
   Dialog,
@@ -37,7 +36,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function Agenda() {
-  const { appointments, setAppointments } = useApp();
+  const { 
+    appointments, 
+    setAppointments,
+    updateAppointmentStatus
+  } = useApp();
   const navigate = useNavigate();
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -87,6 +90,7 @@ export default function Agenda() {
             date: app.date,
             time: app.time,
             notes: app.notes,
+            status: app.status || AppointmentStatus.AGENDADO,
           }));
           
           setAppointments(formattedAppointments);
@@ -142,6 +146,7 @@ export default function Agenda() {
           date: data.date,
           time: data.time,
           notes: data.notes,
+          status: AppointmentStatus.AGENDADO,
         };
         
         setAppointments([...appointments, newAppointmentFormatted]);
@@ -214,6 +219,22 @@ export default function Agenda() {
   
   const formatTime = (time: string) => {
     return time;
+  };
+
+  // Helper function to get status color
+  const getStatusColor = (status: AppointmentStatus) => {
+    switch (status) {
+      case AppointmentStatus.FINALIZADO:
+        return "bg-green-500";
+      case AppointmentStatus.EM_ANDAMENTO:
+        return "bg-yellow-500";
+      case AppointmentStatus.CANCELADO:
+        return "bg-gray-500";
+      case AppointmentStatus.ATRASADO:
+        return "bg-red-500";
+      default:
+        return "bg-blue-500";
+    }
   };
   
   return (
@@ -393,7 +414,12 @@ export default function Agenda() {
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline">{formatTime(appointment.time)}</Badge>
+                            <Badge 
+                              variant="outline" 
+                              className={`${getStatusColor(appointment.status)} text-white`}
+                            >
+                              {appointment.status}
+                            </Badge>
                             <h3 className="font-medium">{appointment.clientName}</h3>
                           </div>
                           <p className="text-muted-foreground">
@@ -407,6 +433,36 @@ export default function Agenda() {
                           )}
                         </div>
                         <div className="flex gap-2">
+                          {/* Status change buttons */}
+                          {appointment.status === AppointmentStatus.AGENDADO && (
+                            <Button
+                              onClick={() => updateAppointmentStatus(
+                                appointment.id, 
+                                AppointmentStatus.EM_ANDAMENTO
+                              )}
+                            >
+                              Iniciar Serviço
+                            </Button>
+                          )}
+                          {appointment.status === AppointmentStatus.EM_ANDAMENTO && (
+                            <Button
+                              onClick={() => updateAppointmentStatus(
+                                appointment.id, 
+                                AppointmentStatus.FINALIZADO
+                              )}
+                            >
+                              Finalizar Serviço
+                            </Button>
+                          )}
+                          <Button
+                            variant="destructive"
+                            onClick={() => updateAppointmentStatus(
+                              appointment.id, 
+                              AppointmentStatus.CANCELADO
+                            )}
+                          >
+                            Cancelar
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"

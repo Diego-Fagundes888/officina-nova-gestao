@@ -3,6 +3,7 @@ import { ServiceOrder, Appointment, InventoryItem, Expense, ServiceStatus, Vehic
 import { mockServiceOrders, mockAppointments, mockExpenses, generateId } from "@/utils/mockData";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AppointmentStatus } from "@/types";
 
 interface AppContextProps {
   serviceOrders: ServiceOrder[];
@@ -32,6 +33,7 @@ interface AppContextProps {
   vehicles: Vehicle[];
   getVehicle: (plate: string) => Promise<Vehicle | null>;
   getVehicleServices: (plate: string) => VehicleService[];
+  updateAppointmentStatus: (id: string, status: AppointmentStatus) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -127,7 +129,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (appointmentsError) throw appointmentsError;
         
         if (appointmentsData && appointmentsData.length > 0) {
-          const formattedAppointments = appointmentsData.map(app => ({
+          const formattedAppointments = data.map(app => ({
             id: app.id,
             clientName: app.client_name,
             vehicle: {
@@ -139,6 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             date: app.date,
             time: app.time,
             notes: app.notes,
+            status: app.status || AppointmentStatus.AGENDADO,
           }));
           
           setAppointments(formattedAppointments);
@@ -716,6 +719,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateAppointmentStatus = async (id: string, status: AppointmentStatus) => {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setAppointments(appointments.map(app => 
+        app.id === id ? { ...app, status } : app
+      ));
+      
+      const { error: historyError } = await supabase
+        .from('appointment_status_history')
+        .insert({
+          appointment_id: id,
+          previous_status: appointments.find(app => app.id === id)?.status,
+          new_status: status
+        });
+      
+      if (historyError) throw historyError;
+      
+      toast.success(`Status do agendamento atualizado para ${status}`);
+    } catch (error: any) {
+      console.error("Erro ao atualizar status do agendamento:", error);
+      toast.error(`Erro ao atualizar status: ${error.message}`);
+    }
+  };
+
   const getOrCreateVehicle = async (plate: string, model: string, year: string): Promise<Vehicle> => {
     try {
       const { data: existingVehicle, error: queryError } = await supabase
@@ -806,6 +839,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         vehicles,
         getVehicle,
         getVehicleServices,
+        updateAppointmentStatus,
       }}
     >
       {children}
