@@ -738,33 +738,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         app.id === id ? { ...app, status } : app
       ));
       
-      // Record the status change in history
-      // Note: Using try-catch since appointment_status_history may not be in the Supabase types
-      try {
-        // Check if the table exists before attempting to insert
-        const { data, error: tableCheckError } = await supabase
-          .from('appointment_status_history')
-          .select('id')
-          .limit(1);
-        
-        if (tableCheckError) {
-          console.error("Error checking appointment_status_history table:", tableCheckError);
-          return;
-        }
-        
-        // If table exists, insert the history record directly using SQL
-        const { error: insertError } = await supabase
-          .rpc('insert_status_history', {
-            p_appointment_id: id,
-            p_previous_status: currentAppointment.status,
-            p_new_status: status
-          });
-        
-        if (insertError) {
-          console.error("Error recording status history:", insertError);
-        }
-      } catch (historyError) {
-        console.error("Error accessing appointment_status_history table:", historyError);
+      const { error: rpcError } = await supabase
+        .rpc('insert_status_history', {
+          p_appointment_id: id,
+          p_previous_status: currentAppointment.status,
+          p_new_status: status
+        });
+      
+      if (rpcError) {
+        console.error("Error recording status history:", rpcError);
       }
       
       toast.success(`Status do agendamento atualizado para ${status}`);

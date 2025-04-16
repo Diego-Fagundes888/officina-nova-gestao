@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -48,6 +49,33 @@ export interface Database {
           notes?: string | null
           created_at?: string
           status?: string
+        }
+        Relationships: []
+      }
+      appointment_status_history: {
+        Row: {
+          id: string
+          appointment_id: string
+          previous_status: string | null
+          new_status: string
+          changed_by: string | null
+          changed_at: string
+        }
+        Insert: {
+          id?: string
+          appointment_id: string
+          previous_status?: string | null
+          new_status: string
+          changed_by?: string | null
+          changed_at?: string
+        }
+        Update: {
+          id?: string
+          appointment_id?: string
+          previous_status?: string | null
+          new_status?: string
+          changed_by?: string | null
+          changed_at?: string
         }
         Relationships: []
       }
@@ -253,7 +281,14 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      insert_status_history: {
+        Args: {
+          p_appointment_id: string
+          p_previous_status: string
+          p_new_status: string
+        }
+        Returns: void
+      }
     }
     Enums: {
       [_ in never]: never
