@@ -127,7 +127,8 @@ export default function VehicleHistory() {
               <SelectValue placeholder="Todos os veículos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os veículos</SelectItem>
+              {/* Aqui está a correção: usamos "all" em vez de string vazia */}
+              <SelectItem value="all">Todos os veículos</SelectItem>
               {uniquePlates.map((plate) => (
                 <SelectItem key={plate} value={plate}>{plate}</SelectItem>
               ))}
