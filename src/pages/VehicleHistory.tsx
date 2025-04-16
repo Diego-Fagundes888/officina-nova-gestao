@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -44,43 +44,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, Plus, Search, Trash2, Edit, FileText } from "lucide-react";
+import { Search, Trash2, Edit, FileText } from "lucide-react";
 import { VehicleService } from "@/types";
 import VehicleServiceForm from "@/components/VehicleServiceForm";
 
 export default function VehicleHistory() {
-  const { vehicleServices } = useApp();
+  const { vehicleServices, vehicles, deleteVehicleService } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPlate, setFilterPlate] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<VehicleService | null>(null);
   
-  const uniquePlates = Array.from(
-    new Set(vehicleServices.map(service => {
-      // Se tivermos o vehicle_id, precisamos buscar a placa em outro lugar
-      return service.vehicle_id;
-    }))
-  );
+  // Extrair placas únicas dos veículos e serviços
+  const uniquePlates = [...new Set([
+    ...vehicles.map(v => v.plate),
+    ...vehicleServices.map(s => s.vehicle_id)
+  ])];
   
   const filteredServices = vehicleServices
     .filter(service => {
-      const matchesPlate = !filterPlate || service.vehicle_id === filterPlate;
+      const matchesPlate = !filterPlate || filterPlate === "all" || service.vehicle_id === filterPlate;
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = 
         !searchQuery ||
         service.service_type.toLowerCase().includes(searchLower) ||
         (service.mechanic_name && service.mechanic_name.toLowerCase().includes(searchLower)) ||
-        (service.description && service.description.toLowerCase().includes(searchLower));
+        (service.description && service.description.toLowerCase().includes(searchLower)) ||
+        (service.client_name && service.client_name.toLowerCase().includes(searchLower));
       
       return matchesPlate && matchesSearch;
     })
-    .sort((a, b) => new Date(a.service_date).getTime() - new Date(b.service_date).getTime());
+    .sort((a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime());
   
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
@@ -94,6 +88,14 @@ export default function VehicleHistory() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setSelectedService(null);
+  };
+  
+  const handleDeleteService = async (id: string) => {
+    try {
+      await deleteVehicleService(id);
+    } catch (error) {
+      console.error("Erro ao excluir serviço:", error);
+    }
   };
   
   return (
@@ -112,7 +114,7 @@ export default function VehicleHistory() {
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               id="search"
-              placeholder="Buscar por tipo de serviço, mecânico ou descrição..."
+              placeholder="Buscar por tipo de serviço, mecânico, cliente ou descrição..."
               className="pl-8"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -127,7 +129,6 @@ export default function VehicleHistory() {
               <SelectValue placeholder="Todos os veículos" />
             </SelectTrigger>
             <SelectContent>
-              {/* Aqui está a correção: usamos "all" em vez de string vazia */}
               <SelectItem value="all">Todos os veículos</SelectItem>
               {uniquePlates.map((plate) => (
                 <SelectItem key={plate} value={plate}>{plate}</SelectItem>
@@ -152,6 +153,7 @@ export default function VehicleHistory() {
                 <TableRow>
                   <TableHead>Data</TableHead>
                   <TableHead>Veículo</TableHead>
+                  <TableHead>Cliente</TableHead>
                   <TableHead>Tipo de Serviço</TableHead>
                   <TableHead>Mecânico</TableHead>
                   <TableHead>Valor</TableHead>
@@ -161,7 +163,7 @@ export default function VehicleHistory() {
               <TableBody>
                 {filteredServices.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                       {searchQuery || filterPlate
                         ? "Nenhum resultado encontrado para sua busca."
                         : "Nenhum serviço registrado no histórico."}
@@ -172,6 +174,7 @@ export default function VehicleHistory() {
                     <TableRow key={service.id}>
                       <TableCell>{formatDate(service.service_date)}</TableCell>
                       <TableCell>{service.vehicle_id}</TableCell>
+                      <TableCell>{service.client_name || "—"}</TableCell>
                       <TableCell>{service.service_type}</TableCell>
                       <TableCell>{service.mechanic_name || "—"}</TableCell>
                       <TableCell>{service.price ? formatCurrency(service.price) : "—"}</TableCell>
@@ -206,9 +209,7 @@ export default function VehicleHistory() {
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction 
                                   className="bg-red-500 hover:bg-red-600"
-                                  onClick={() => {
-                                    // Implementar função para excluir o serviço
-                                  }}
+                                  onClick={() => handleDeleteService(service.id)}
                                 >
                                   Excluir
                                 </AlertDialogAction>
@@ -249,30 +250,45 @@ export default function VehicleHistory() {
                   </div>
                 </div>
                 
+                {selectedService.client_name && (
+                  <div>
+                    <h4 className="font-medium text-sm">Cliente</h4>
+                    <p>{selectedService.client_name}</p>
+                  </div>
+                )}
+                
                 <div>
                   <h4 className="font-medium text-sm">Tipo de Serviço</h4>
                   <p>{selectedService.service_type}</p>
                 </div>
                 
-                <div>
-                  <h4 className="font-medium text-sm">Descrição do Serviço</h4>
-                  <p>{selectedService.description || "Sem descrição"}</p>
-                </div>
+                {selectedService.description && (
+                  <div>
+                    <h4 className="font-medium text-sm">Descrição do Serviço</h4>
+                    <p>{selectedService.description}</p>
+                  </div>
+                )}
                 
-                <div>
-                  <h4 className="font-medium text-sm">Observações</h4>
-                  <p>{selectedService.notes || "Sem observações"}</p>
-                </div>
+                {selectedService.notes && (
+                  <div>
+                    <h4 className="font-medium text-sm">Observações</h4>
+                    <p>{selectedService.notes}</p>
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium text-sm">Valor do Serviço</h4>
-                    <p>{selectedService.price ? formatCurrency(selectedService.price) : "—"}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-sm">Mecânico Responsável</h4>
-                    <p>{selectedService.mechanic_name || "—"}</p>
-                  </div>
+                  {selectedService.price && (
+                    <div>
+                      <h4 className="font-medium text-sm">Valor do Serviço</h4>
+                      <p>{formatCurrency(selectedService.price)}</p>
+                    </div>
+                  )}
+                  {selectedService.mechanic_name && (
+                    <div>
+                      <h4 className="font-medium text-sm">Mecânico Responsável</h4>
+                      <p>{selectedService.mechanic_name}</p>
+                    </div>
+                  )}
                 </div>
               </div>
               

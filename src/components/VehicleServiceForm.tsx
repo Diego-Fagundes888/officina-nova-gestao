@@ -32,17 +32,18 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { VehicleService } from "@/types";
+import { VehicleService, Vehicle } from "@/types";
 
 interface VehicleServiceFormProps {
   service?: VehicleService;
 }
 
 export default function VehicleServiceForm({ service }: VehicleServiceFormProps) {
-  const { addVehicleService, updateVehicleService } = useApp();
+  const { addVehicleService, updateVehicleService, vehicles } = useApp();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     vehicle_id: "",
+    client_name: "",
     service_type: "",
     description: "",
     notes: "",
@@ -57,6 +58,7 @@ export default function VehicleServiceForm({ service }: VehicleServiceFormProps)
     if (service) {
       setFormData({
         vehicle_id: service.vehicle_id || "",
+        client_name: service.client_name || "",
         service_type: service.service_type || "",
         description: service.description || "",
         notes: service.notes || "",
@@ -94,6 +96,7 @@ export default function VehicleServiceForm({ service }: VehicleServiceFormProps)
     if (!service) {
       setFormData({
         vehicle_id: "",
+        client_name: "",
         service_type: "",
         description: "",
         notes: "",
@@ -132,6 +135,9 @@ export default function VehicleServiceForm({ service }: VehicleServiceFormProps)
     }
   };
   
+  // Placas dos veículos registrados
+  const vehiclePlates = vehicles.map(v => v.plate);
+  
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -154,14 +160,30 @@ export default function VehicleServiceForm({ service }: VehicleServiceFormProps)
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="vehicle_id">Veículo (Placa)*</Label>
-              <Input
-                id="vehicle_id"
-                name="vehicle_id"
-                value={formData.vehicle_id}
-                onChange={handleChange}
-                placeholder="Ex: ABC-1234"
-                required
-              />
+              {vehiclePlates.length > 0 ? (
+                <Select
+                  value={formData.vehicle_id}
+                  onValueChange={(value) => handleSelectChange("vehicle_id", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um veículo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehiclePlates.map((plate) => (
+                      <SelectItem key={plate} value={plate}>{plate}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="vehicle_id"
+                  name="vehicle_id"
+                  value={formData.vehicle_id}
+                  onChange={handleChange}
+                  placeholder="Ex: ABC-1234"
+                  required
+                />
+              )}
             </div>
             
             <div className="space-y-2">
@@ -190,6 +212,17 @@ export default function VehicleServiceForm({ service }: VehicleServiceFormProps)
                 </PopoverContent>
               </Popover>
             </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="client_name">Cliente</Label>
+            <Input
+              id="client_name"
+              name="client_name"
+              value={formData.client_name}
+              onChange={handleChange}
+              placeholder="Nome do cliente"
+            />
           </div>
           
           <div className="space-y-2">

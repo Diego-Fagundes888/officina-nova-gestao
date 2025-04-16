@@ -1,3 +1,4 @@
+
 export enum ServiceStatus {
   DRAFT = "RASCUNHO",
   IN_PROGRESS = "EM_ANDAMENTO",
@@ -64,12 +65,21 @@ export interface Expense {
 
 export interface VehicleService {
   id: string;
-  vehicle_id: string;
+  vehicle_id: string; // Agora estamos usando a placa como vehicle_id
   service_type: string;
   description?: string;
   notes?: string;
   service_date: string;
   price?: number;
   mechanic_name?: string;
+  created_at: string;
+  client_name?: string; // Adicionando nome do cliente
+}
+
+export interface Vehicle {
+  id: string;
+  plate: string;
+  model: string;
+  year: string;
   created_at: string;
 }

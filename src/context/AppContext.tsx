@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { ServiceOrder, Appointment, InventoryItem, Expense, ServiceStatus, VehicleService } from "@/types";
+import { ServiceOrder, Appointment, InventoryItem, Expense, ServiceStatus, VehicleService, Vehicle } from "@/types";
 import { mockServiceOrders, mockAppointments, mockExpenses, generateId } from "@/utils/mockData";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,9 @@ interface AppContextProps {
   updateVehicleService: (id: string, service: Partial<VehicleService>) => Promise<void>;
   deleteVehicleService: (id: string) => Promise<void>;
   setVehicleServices: (services: VehicleService[]) => void;
+  vehicles: Vehicle[];
+  getVehicle: (plate: string) => Promise<Vehicle | null>;
+  getVehicleServices: (plate: string) => VehicleService[];
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -44,11 +47,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [vehicleServices, setVehicleServices] = useState<VehicleService[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     async function fetchInitialData() {
       try {
+        const { data: vehiclesData, error: vehiclesError } = await supabase
+          .from('vehicles')
+          .select('*');
+        
+        if (vehiclesError) throw vehiclesError;
+        
+        if (vehiclesData && vehiclesData.length > 0) {
+          setVehicles(vehiclesData);
+        }
+        
         const { data: serviceOrdersData, error: serviceOrdersError } = await supabase
           .from('service_orders')
           .select('*');
@@ -181,6 +195,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         total: order.total,
         status: order.status,
       };
+      
+      await getOrCreateVehicle(order.vehicle.plate, order.vehicle.model, order.vehicle.year);
       
       const { data: newOrder, error: orderError } = await supabase
         .from('service_orders')
@@ -339,6 +355,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const now = new Date().toISOString();
       
+      const order = serviceOrders.find(o => o.id === id);
+      if (!order) {
+        throw new Error("Ordem de serviço não encontrada");
+      }
+      
       const { error } = await supabase
         .from('service_orders')
         .update({
@@ -349,6 +370,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .eq('id', id);
       
       if (error) throw error;
+      
+      await addVehicleService({
+        vehicle_id: order.vehicle.plate,
+        service_type: order.serviceType,
+        description: `Ordem de Serviço #${id.substring(0, 8)}`,
+        notes: `Mão de obra: ${order.laborCost}. Peças incluídas: ${order.parts.map(p => p.name).join(', ')}`,
+        service_date: now,
+        price: order.total,
+        client_name: order.clientName
+      });
       
       setServiceOrders(serviceOrders.map(order => 
         order.id === id 
@@ -381,6 +412,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         notes: appointment.notes || null,
       };
       
+      await getOrCreateVehicle(appointment.vehicle.plate, appointment.vehicle.model, appointment.vehicle.year);
+      
       const { data, error } = await supabase
         .from('appointments')
         .insert(appointmentData)
@@ -402,6 +435,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         time: data.time,
         notes: data.notes,
       };
+      
+      await addVehicleService({
+        vehicle_id: appointment.vehicle.plate,
+        service_type: "Agendamento: " + appointment.serviceType,
+        description: `Agendamento para ${appointment.date} às ${appointment.time}`,
+        notes: appointment.notes || "Sem observações",
+        service_date: new Date().toISOString(),
+        client_name: appointment.clientName
+      });
       
       setAppointments([...appointments, newAppointment]);
       toast.success("Agendamento criado com sucesso!");
@@ -648,6 +690,66 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const getOrCreateVehicle = async (plate: string, model: string, year: string): Promise<Vehicle> => {
+    try {
+      const { data: existingVehicle, error: queryError } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('plate', plate)
+        .maybeSingle();
+      
+      if (queryError) throw queryError;
+      
+      if (existingVehicle) {
+        return existingVehicle as Vehicle;
+      }
+      
+      const { data: newVehicle, error: insertError } = await supabase
+        .from('vehicles')
+        .insert({
+          plate,
+          model,
+          year
+        })
+        .select('*')
+        .single();
+      
+      if (insertError) throw insertError;
+      
+      const vehicleData = newVehicle as Vehicle;
+      setVehicles([...vehicles, vehicleData]);
+      
+      return vehicleData;
+    } catch (error: any) {
+      console.error("Erro ao obter/criar veículo:", error);
+      throw error;
+    }
+  };
+
+  const getVehicle = async (plate: string): Promise<Vehicle | null> => {
+    try {
+      const localVehicle = vehicles.find(v => v.plate === plate);
+      if (localVehicle) return localVehicle;
+      
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('plate', plate)
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      return data as Vehicle | null;
+    } catch (error: any) {
+      console.error("Erro ao buscar veículo:", error);
+      return null;
+    }
+  };
+
+  const getVehicleServices = (plate: string): VehicleService[] => {
+    return vehicleServices.filter(service => service.vehicle_id === plate);
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -675,6 +777,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateVehicleService,
         deleteVehicleService,
         setVehicleServices,
+        vehicles,
+        getVehicle,
+        getVehicleServices,
       }}
     >
       {children}
