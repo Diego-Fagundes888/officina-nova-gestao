@@ -27,12 +27,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Edit } from "lucide-react";
+import { CalendarIcon, Plus, Edit, Send } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { VehicleService, Vehicle } from "@/types";
+import { Switch } from "@/components/ui/switch";
 
 interface VehicleServiceFormProps {
   service?: VehicleService;
@@ -41,6 +42,7 @@ interface VehicleServiceFormProps {
 export default function VehicleServiceForm({ service }: VehicleServiceFormProps) {
   const { addVehicleService, updateVehicleService, vehicles } = useApp();
   const [open, setOpen] = useState(false);
+  const [sendNotification, setSendNotification] = useState(false);
   const [formData, setFormData] = useState({
     vehicle_id: "",
     client_name: "",
@@ -105,6 +107,7 @@ export default function VehicleServiceForm({ service }: VehicleServiceFormProps)
         mechanic_name: "",
       });
       setDate(new Date());
+      setSendNotification(false);
     }
   };
   
@@ -127,6 +130,13 @@ export default function VehicleServiceForm({ service }: VehicleServiceFormProps)
         await updateVehicleService(service.id, serviceData);
       } else {
         await addVehicleService(serviceData);
+        
+        if (sendNotification) {
+          // Simulação de envio de notificação
+          toast.success(`Notificação enviada para ${formData.client_name}`, {
+            description: "Cliente notificado sobre o novo serviço realizado."
+          });
+        }
       }
       
       setOpen(false);
@@ -135,6 +145,20 @@ export default function VehicleServiceForm({ service }: VehicleServiceFormProps)
       console.error("Erro ao salvar serviço:", error);
     }
   };
+  
+  // Lista de tipos de serviços comuns
+  const commonServiceTypes = [
+    "Troca de óleo",
+    "Revisão geral",
+    "Alinhamento e balanceamento",
+    "Troca de pastilhas de freio",
+    "Troca de filtros",
+    "Diagnóstico eletrônico",
+    "Troca de correia dentada",
+    "Manutenção do ar condicionado",
+    "Troca de bateria",
+    "Reparo do sistema elétrico"
+  ];
   
   // Placas dos veículos registrados
   const vehiclePlates = vehicles.map(v => v.plate);
@@ -228,14 +252,31 @@ export default function VehicleServiceForm({ service }: VehicleServiceFormProps)
           
           <div className="space-y-2">
             <Label htmlFor="service_type">Tipo de Serviço*</Label>
-            <Input
-              id="service_type"
-              name="service_type"
+            <Select
               value={formData.service_type}
-              onChange={handleChange}
-              placeholder="Ex: Troca de óleo, Revisão, etc."
-              required
-            />
+              onValueChange={(value) => handleSelectChange("service_type", value)}
+            >
+              <SelectTrigger id="service_type">
+                <SelectValue placeholder="Selecione ou digite um tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {commonServiceTypes.map((type) => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
+                <SelectItem value="custom">Outro (personalizado)</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {formData.service_type === "custom" && (
+              <Input
+                className="mt-2"
+                name="service_type"
+                value={formData.service_type === "custom" ? "" : formData.service_type}
+                onChange={handleChange}
+                placeholder="Digite o tipo de serviço"
+                required
+              />
+            )}
           </div>
           
           <div className="space-y-2">
@@ -288,11 +329,27 @@ export default function VehicleServiceForm({ service }: VehicleServiceFormProps)
             </div>
           </div>
           
+          {!service && (
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="send-notification"
+                checked={sendNotification}
+                onCheckedChange={setSendNotification}
+              />
+              <Label htmlFor="send-notification" className="cursor-pointer">
+                Enviar notificação ao cliente
+              </Label>
+            </div>
+          )}
+          
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit">{service ? "Atualizar" : "Adicionar"}</Button>
+            <Button type="submit">
+              {service ? "Atualizar" : "Adicionar"}
+              {!service && sendNotification && <Send className="ml-2 h-4 w-4" />}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

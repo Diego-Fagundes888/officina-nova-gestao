@@ -44,7 +44,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Trash2, Edit, FileText } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Search, Trash2, Edit, FileText, Calendar, ArrowUpDown } from "lucide-react";
 import { VehicleService } from "@/types";
 import VehicleServiceForm from "@/components/VehicleServiceForm";
 
@@ -54,27 +60,48 @@ export default function VehicleHistory() {
   const [filterPlate, setFilterPlate] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<VehicleService | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [activeTab, setActiveTab] = useState("all");
   
-  // Extrair placas únicas dos veículos e serviços
+  // Extract unique plates from vehicles and services
   const uniquePlates = [...new Set([
     ...vehicles.map(v => v.plate),
     ...vehicleServices.map(s => s.vehicle_id)
   ])];
   
+  // Filter and sort services based on search, plate filter, and sort direction
   const filteredServices = vehicleServices
     .filter(service => {
+      // Filter by active tab (if not "all")
+      if (activeTab !== "all") {
+        const currentMonth = new Date().getMonth();
+        const serviceMonth = new Date(service.service_date).getMonth();
+        
+        if (activeTab === "recent" && (currentMonth - serviceMonth > 3)) {
+          return false;
+        }
+      }
+      
+      // Filter by plate
       const matchesPlate = !filterPlate || filterPlate === "all" || service.vehicle_id === filterPlate;
+      
+      // Filter by search query
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = 
         !searchQuery ||
         service.service_type.toLowerCase().includes(searchLower) ||
         (service.mechanic_name && service.mechanic_name.toLowerCase().includes(searchLower)) ||
         (service.description && service.description.toLowerCase().includes(searchLower)) ||
-        (service.client_name && service.client_name.toLowerCase().includes(searchLower));
+        (service.client_name && service.client_name.toLowerCase().includes(searchLower)) ||
+        format(new Date(service.service_date), "dd/MM/yyyy", { locale: ptBR }).includes(searchLower);
       
       return matchesPlate && matchesSearch;
     })
-    .sort((a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime());
+    .sort((a, b) => {
+      const dateA = new Date(a.service_date).getTime();
+      const dateB = new Date(b.service_date).getTime();
+      return sortDirection === "asc" ? dateA - dateB : dateB - dateA;
+    });
   
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
@@ -98,6 +125,10 @@ export default function VehicleHistory() {
     }
   };
   
+  const toggleSortDirection = () => {
+    setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+  };
+  
   return (
     <div className="space-y-6">
       <div>
@@ -107,6 +138,13 @@ export default function VehicleHistory() {
         </p>
       </div>
       
+      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="all">Todos os serviços</TabsTrigger>
+          <TabsTrigger value="recent">Últimos 3 meses</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
       <div className="flex flex-col md:flex-row gap-4 items-end">
         <div className="flex-1 space-y-2">
           <Label htmlFor="search">Pesquisar</Label>
@@ -114,7 +152,7 @@ export default function VehicleHistory() {
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               id="search"
-              placeholder="Buscar por tipo de serviço, mecânico, cliente ou descrição..."
+              placeholder="Buscar por tipo de serviço, mecânico, cliente, data ou descrição..."
               className="pl-8"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -144,7 +182,19 @@ export default function VehicleHistory() {
       
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle>Histórico de Serviços</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Histórico de Serviços</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={toggleSortDirection}
+              className="flex items-center gap-1"
+            >
+              <Calendar className="h-4 w-4 mr-1" />
+              {sortDirection === "desc" ? "Mais recentes" : "Mais antigos"}
+              <ArrowUpDown className="h-4 w-4" />
+            </Button>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-hidden">
