@@ -13,6 +13,7 @@ import History from "./pages/History";
 import Financial from "./pages/Financial";
 import Inventory from "./pages/Inventory";
 import Agenda from "./pages/Agenda";
+import VehicleHistory from "./pages/VehicleHistory";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
 
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/financeiro" element={<Financial />} />
               <Route path="/pecas" element={<Inventory />} />
               <Route path="/agenda" element={<Agenda />} />
+              <Route path="/historico-veiculo" element={<VehicleHistory />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

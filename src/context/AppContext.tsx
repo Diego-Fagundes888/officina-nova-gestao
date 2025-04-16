@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { ServiceOrder, Appointment, InventoryItem, Expense, ServiceStatus } from "@/types";
+import { ServiceOrder, Appointment, InventoryItem, Expense, ServiceStatus, VehicleService } from "@/types";
 import { mockServiceOrders, mockAppointments, mockExpenses, generateId } from "@/utils/mockData";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,11 @@ interface AppContextProps {
   updateExpense: (id: string, expense: Partial<Expense>) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
   setInventory: (items: InventoryItem[]) => void;
+  vehicleServices: VehicleService[];
+  addVehicleService: (service: Omit<VehicleService, "id" | "created_at">) => Promise<void>;
+  updateVehicleService: (id: string, service: Partial<VehicleService>) => Promise<void>;
+  deleteVehicleService: (id: string) => Promise<void>;
+  setVehicleServices: (services: VehicleService[]) => void;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -38,6 +43,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [vehicleServices, setVehicleServices] = useState<VehicleService[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -136,6 +142,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setExpenses(expensesData);
         } else {
           setExpenses(mockExpenses);
+        }
+        
+        const { data: vehicleServicesData, error: vehicleServicesError } = await supabase
+          .from('vehicle_services')
+          .select('*');
+        
+        if (vehicleServicesError) throw vehicleServicesError;
+        
+        if (vehicleServicesData && vehicleServicesData.length > 0) {
+          setVehicleServices(vehicleServicesData);
         }
         
       } catch (error: any) {
@@ -572,6 +588,66 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addVehicleService = async (service: Omit<VehicleService, "id" | "created_at">) => {
+    try {
+      const { data, error } = await supabase
+        .from('vehicle_services')
+        .insert(service)
+        .select('*')
+        .single();
+      
+      if (error) throw error;
+      
+      setVehicleServices([...vehicleServices, data]);
+      toast.success("Serviço adicionado ao histórico do veículo!");
+    } catch (error: any) {
+      console.error("Erro ao adicionar serviço:", error);
+      toast.error(`Erro ao adicionar serviço: ${error.message}`);
+    }
+  };
+
+  const updateVehicleService = async (id: string, serviceUpdate: Partial<VehicleService>) => {
+    try {
+      const { error } = await supabase
+        .from('vehicle_services')
+        .update(serviceUpdate)
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setVehicleServices(vehicleServices.map(service => 
+        service.id === id ? { ...service, ...serviceUpdate } : service
+      ));
+      
+      toast.success("Serviço atualizado com sucesso!");
+    } catch (error: any) {
+      console.error("Erro ao atualizar serviço:", error);
+      toast.error(`Erro ao atualizar serviço: ${error.message}`);
+    }
+  };
+
+  const deleteVehicleService = async (id: string) => {
+    try {
+      if (!isValidUUID(id)) {
+        toast.error("ID inválido para exclusão");
+        return;
+      }
+      
+      const { error } = await supabase
+        .from('vehicle_services')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setVehicleServices(vehicleServices.filter(service => service.id !== id));
+      toast.success("Serviço excluído!");
+    } catch (error: any) {
+      console.error("Erro ao excluir serviço:", error);
+      toast.error(`Erro ao excluir serviço: ${error.message}`);
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -594,6 +670,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateExpense,
         deleteExpense,
         setInventory,
+        vehicleServices,
+        addVehicleService,
+        updateVehicleService,
+        deleteVehicleService,
+        setVehicleServices,
       }}
     >
       {children}

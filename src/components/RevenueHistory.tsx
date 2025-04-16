@@ -5,8 +5,9 @@ import { formatCurrency } from "@/utils/mockData";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Trash2 } from "lucide-react";
+import { CheckCircle, ExternalLink, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,10 +43,17 @@ export default function RevenueHistory() {
   return (
     <Card className="w-full">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center text-base sm:text-lg font-semibold">
-          <CheckCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-          Histórico de Receitas
-        </CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="flex items-center text-base sm:text-lg font-semibold">
+            <CheckCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+            Histórico de Receitas
+          </CardTitle>
+          <Button variant="link" size="sm" asChild>
+            <Link to="/historico-veiculo" className="text-xs sm:text-sm">
+              Ver Histórico de Veículos <ExternalLink className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
+            </Link>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {completedOrders.length === 0 ? (

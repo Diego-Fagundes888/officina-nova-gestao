@@ -1,5 +1,3 @@
-
-
 export enum ServiceStatus {
   DRAFT = "RASCUNHO",
   IN_PROGRESS = "EM_ANDAMENTO",
@@ -64,3 +62,14 @@ export interface Expense {
   category: string;
 }
 
+export interface VehicleService {
+  id: string;
+  vehicle_id: string;
+  service_type: string;
+  description?: string;
+  notes?: string;
+  service_date: string;
+  price?: number;
+  mechanic_name?: string;
+  created_at: string;
+}
