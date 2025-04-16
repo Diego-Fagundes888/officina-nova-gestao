@@ -9,7 +9,242 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          client_name: string
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          service_type: string
+          time: string
+          vehicle_model: string
+          vehicle_plate: string
+          vehicle_year: string
+        }
+        Insert: {
+          client_name: string
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string | null
+          service_type: string
+          time: string
+          vehicle_model: string
+          vehicle_plate: string
+          vehicle_year: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          service_type?: string
+          time?: string
+          vehicle_model?: string
+          vehicle_plate?: string
+          vehicle_year?: string
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date: string
+          description: string
+          id?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          id: string
+          min_stock: number
+          name: string
+          purchase_price: number
+          selling_price: number
+          stock: number
+        }
+        Insert: {
+          id?: string
+          min_stock: number
+          name: string
+          purchase_price: number
+          selling_price: number
+          stock: number
+        }
+        Update: {
+          id?: string
+          min_stock?: number
+          name?: string
+          purchase_price?: number
+          selling_price?: number
+          stock?: number
+        }
+        Relationships: []
+      }
+      service_order_parts: {
+        Row: {
+          id: string
+          inventory_item_id: string | null
+          name: string
+          price: number
+          quantity: number
+          service_order_id: string | null
+        }
+        Insert: {
+          id?: string
+          inventory_item_id?: string | null
+          name: string
+          price: number
+          quantity: number
+          service_order_id?: string | null
+        }
+        Update: {
+          id?: string
+          inventory_item_id?: string | null
+          name?: string
+          price?: number
+          quantity?: number
+          service_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_order_parts_service_order_id_fkey"
+            columns: ["service_order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_orders: {
+        Row: {
+          client_name: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          labor_cost: number
+          service_type: string
+          status: string
+          total: number
+          updated_at: string
+          vehicle_model: string
+          vehicle_plate: string
+          vehicle_year: string
+        }
+        Insert: {
+          client_name: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          labor_cost: number
+          service_type: string
+          status: string
+          total: number
+          updated_at?: string
+          vehicle_model: string
+          vehicle_plate: string
+          vehicle_year: string
+        }
+        Update: {
+          client_name?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          labor_cost?: number
+          service_type?: string
+          status?: string
+          total?: number
+          updated_at?: string
+          vehicle_model?: string
+          vehicle_plate?: string
+          vehicle_year?: string
+        }
+        Relationships: []
+      }
+      vehicle_services: {
+        Row: {
+          client_name: string
+          created_at: string
+          description: string | null
+          id: string
+          mechanic_name: string | null
+          notes: string | null
+          price: number | null
+          service_date: string
+          service_type: string
+          vehicle_id: string
+        }
+        Insert: {
+          client_name: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          mechanic_name?: string | null
+          notes?: string | null
+          price?: number | null
+          service_date: string
+          service_type: string
+          vehicle_id: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          mechanic_name?: string | null
+          notes?: string | null
+          price?: number | null
+          service_date?: string
+          service_type?: string
+          vehicle_id?: string
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          id: string
+          model: string
+          plate: string
+          year: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model: string
+          plate: string
+          year: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model?: string
+          plate?: string
+          year?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -3,6 +3,7 @@ import { ServiceOrder, Appointment, InventoryItem, Expense, ServiceStatus, Vehic
 import { mockServiceOrders, mockAppointments, mockExpenses, generateId } from "@/utils/mockData";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/types/supabase";
 
 interface AppContextProps {
   serviceOrders: ServiceOrder[];
