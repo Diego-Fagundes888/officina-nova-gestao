@@ -16,9 +16,11 @@ import CardStats from "@/components/CardStats";
 import RevenueHistory from "@/components/RevenueHistory";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ServiceStatus } from "@/types";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function Financial() {
   const { serviceOrders } = useApp();
+  const [chartView, setChartView] = useState<"daily" | "weekly" | "monthly">("daily");
   
   const today = new Date();
   const completedToday = serviceOrders.filter(
@@ -46,6 +48,14 @@ export default function Financial() {
             Acompanhe as finanças da sua oficina
           </p>
         </div>
+        
+        <ToggleGroup type="single" value={chartView} onValueChange={(value) => {
+          if (value) setChartView(value as "daily" | "weekly" | "monthly");
+        }}>
+          <ToggleGroupItem value="daily" aria-label="Daily view">Diário</ToggleGroupItem>
+          <ToggleGroupItem value="weekly" aria-label="Weekly view">Semanal</ToggleGroupItem>
+          <ToggleGroupItem value="monthly" aria-label="Monthly view">Mensal</ToggleGroupItem>
+        </ToggleGroup>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -16,7 +16,9 @@ export type Database = {
           date: string
           id: string
           notes: string | null
+          notify_customer: boolean | null
           service_type: string
+          status: string | null
           time: string
           vehicle_model: string
           vehicle_plate: string
@@ -28,7 +30,9 @@ export type Database = {
           date: string
           id?: string
           notes?: string | null
+          notify_customer?: boolean | null
           service_type: string
+          status?: string | null
           time: string
           vehicle_model: string
           vehicle_plate: string
@@ -40,7 +44,9 @@ export type Database = {
           date?: string
           id?: string
           notes?: string | null
+          notify_customer?: boolean | null
           service_type?: string
+          status?: string | null
           time?: string
           vehicle_model?: string
           vehicle_plate?: string
@@ -189,6 +195,109 @@ export type Database = {
           vehicle_model?: string
           vehicle_plate?: string
           vehicle_year?: string
+        }
+        Relationships: []
+      }
+      status_history: {
+        Row: {
+          appointment_id: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_status: string
+          previous_status: string | null
+        }
+        Insert: {
+          appointment_id: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status: string
+          previous_status?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status?: string
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_history_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_services: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          mechanic_name: string | null
+          notes: string | null
+          price: number | null
+          service_date: string
+          service_type: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          mechanic_name?: string | null
+          notes?: string | null
+          price?: number | null
+          service_date?: string
+          service_type: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          mechanic_name?: string | null
+          notes?: string | null
+          price?: number | null
+          service_date?: string
+          service_type?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_services_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          id: string
+          model: string
+          plate: string
+          year: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model: string
+          plate: string
+          year: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model?: string
+          plate?: string
+          year?: string
         }
         Relationships: []
       }

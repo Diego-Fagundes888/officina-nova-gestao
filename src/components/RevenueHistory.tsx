@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 export default function RevenueHistory() {
   const { serviceOrders, deleteServiceOrder } = useApp();
@@ -62,9 +63,9 @@ export default function RevenueHistory() {
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                         <h4 className="font-medium text-xs sm:text-sm">{order.clientName}</h4>
-                        <span className="text-xs px-1.5 py-0.5 bg-secondary rounded-full truncate max-w-[120px] sm:max-w-none">
+                        <Badge variant="secondary" className="truncate max-w-[120px] sm:max-w-none">
                           {order.vehicle.model} ({order.vehicle.plate})
-                        </span>
+                        </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">{order.serviceType}</p>
                     </div>

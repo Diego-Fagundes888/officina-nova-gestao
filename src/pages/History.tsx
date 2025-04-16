@@ -103,38 +103,43 @@ export default function History() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell>{order.clientName}</TableCell>
-                      <TableCell>
-                        {order.vehicle.model} ({order.vehicle.plate})
-                      </TableCell>
-                      <TableCell>{order.serviceType}</TableCell>
-                      <TableCell>
-                        {order.status === ServiceStatus.COMPLETED
-                          ? order.completedAt 
-                            ? formatDate(order.completedAt)
-                            : formatDate(order.updatedAt)
-                          : formatDate(order.createdAt)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusLabels[order.status].variant}>
-                          {statusLabels[order.status].label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(order.total)}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" asChild>
-                          <Link to={`/ordens/${order.id}`}>
-                            <span className="sr-only">Ver detalhes</span>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  filteredOrders.map((order) => {
+                    // Ensure the variant exists, default to 'default' if undefined
+                    const { variant = 'default', label } = statusLabels[order.status] || { label: "Status", variant: "default" };
+                    
+                    return (
+                      <TableRow key={order.id}>
+                        <TableCell>{order.clientName}</TableCell>
+                        <TableCell>
+                          {order.vehicle.model} ({order.vehicle.plate})
+                        </TableCell>
+                        <TableCell>{order.serviceType}</TableCell>
+                        <TableCell>
+                          {order.status === ServiceStatus.COMPLETED
+                            ? order.completedAt 
+                              ? formatDate(order.completedAt)
+                              : formatDate(order.updatedAt)
+                            : formatDate(order.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={variant}>
+                            {label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(order.total)}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" asChild>
+                            <Link to={`/ordens/${order.id}`}>
+                              <span className="sr-only">Ver detalhes</span>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
