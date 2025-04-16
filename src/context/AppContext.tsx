@@ -3,7 +3,6 @@ import { ServiceOrder, Appointment, InventoryItem, Expense, ServiceStatus, Vehic
 import { mockServiceOrders, mockAppointments, mockExpenses, generateId } from "@/utils/mockData";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/types/supabase";
 
 interface AppContextProps {
   serviceOrders: ServiceOrder[];
@@ -639,11 +638,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addVehicleService = async (service: Omit<VehicleService, "id" | "created_at">) => {
+  const addVehicleService = async (service: Omit<VehicleService, "id" | "created_at">): Promise<void> => {
     try {
       await getOrCreateVehicle(service.vehicle_id, "", "");
       
-      const { client_name, ...serviceData } = service;
+      const serviceData = {
+        vehicle_id: service.vehicle_id,
+        service_type: service.service_type,
+        description: service.description,
+        notes: service.notes,
+        service_date: service.service_date,
+        price: service.price,
+        mechanic_name: service.mechanic_name,
+        client_name: service.client_name || ""
+      };
       
       const { data, error } = await supabase
         .from('vehicle_services')
@@ -653,12 +661,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      const fullServiceData = { ...data, client_name: client_name || "" };
+      const fullServiceData = { ...data };
       
       setVehicleServices([...vehicleServices, fullServiceData]);
       toast.success("Serviço adicionado ao histórico do veículo!");
-      
-      return fullServiceData;
     } catch (error: any) {
       console.error("Erro ao adicionar serviço:", error);
       toast.error(`Erro ao adicionar serviço: ${error.message}`);
