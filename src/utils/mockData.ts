@@ -266,7 +266,6 @@ export const getRevenueChartData = () => {
     };
   });
   
-  // Add revenue data
   mockServiceOrders.forEach((order) => {
     if (order.status !== ServiceStatus.COMPLETED || !order.completedAt) return;
     
@@ -279,7 +278,6 @@ export const getRevenueChartData = () => {
     }
   });
   
-  // Add expense data
   mockExpenses.forEach((expense) => {
     const expenseDate = new Date(expense.date);
     const expenseDateStr = format(expenseDate, 'dd/MM');

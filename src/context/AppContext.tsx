@@ -1,9 +1,8 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { ServiceOrder, Appointment, InventoryItem, Expense, ServiceStatus, VehicleService, Vehicle } from "@/types";
+import { ServiceOrder, Appointment, InventoryItem, Expense, ServiceStatus, VehicleService, Vehicle, AppointmentStatus } from "@/types";
 import { mockServiceOrders, mockAppointments, mockExpenses, generateId } from "@/utils/mockData";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { AppointmentStatus } from "@/types";
 
 interface AppContextProps {
   serviceOrders: ServiceOrder[];
@@ -129,7 +128,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (appointmentsError) throw appointmentsError;
         
         if (appointmentsData && appointmentsData.length > 0) {
-          const formattedAppointments = data.map(app => ({
+          const formattedAppointments = appointmentsData.map(app => ({
             id: app.id,
             clientName: app.client_name,
             vehicle: {
@@ -141,7 +140,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             date: app.date,
             time: app.time,
             notes: app.notes,
-            status: app.status || AppointmentStatus.AGENDADO,
+            status: (app.status as AppointmentStatus) || AppointmentStatus.AGENDADO,
           }));
           
           setAppointments(formattedAppointments);
@@ -417,6 +416,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         date: appointment.date,
         time: appointment.time,
         notes: appointment.notes || null,
+        status: appointment.status
       };
       
       await getOrCreateVehicle(appointment.vehicle.plate, appointment.vehicle.model, appointment.vehicle.year);
@@ -441,6 +441,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         date: data.date,
         time: data.time,
         notes: data.notes,
+        status: data.status as AppointmentStatus
       };
       
       const serviceData = {
@@ -738,17 +739,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ));
       
       // Record the status change in history
-      // Note: Only run this if the appointment_status_history table exists
+      // Note: Using try-catch since appointment_status_history may not be in the Supabase types
       try {
-        const { error: historyError } = await supabase
+        // Check if the table exists before attempting to insert
+        const { data, error: tableCheckError } = await supabase
           .from('appointment_status_history')
-          .insert({
-            appointment_id: id,
-            previous_status: currentAppointment.status,
-            new_status: status
+          .select('id')
+          .limit(1);
+        
+        if (tableCheckError) {
+          console.error("Error checking appointment_status_history table:", tableCheckError);
+          return;
+        }
+        
+        // If table exists, insert the history record directly using SQL
+        const { error: insertError } = await supabase
+          .rpc('insert_status_history', {
+            p_appointment_id: id,
+            p_previous_status: currentAppointment.status,
+            p_new_status: status
           });
         
-        if (historyError) console.error("Error recording status history:", historyError);
+        if (insertError) {
+          console.error("Error recording status history:", insertError);
+        }
       } catch (historyError) {
         console.error("Error accessing appointment_status_history table:", historyError);
       }

@@ -65,7 +65,6 @@ export default function Agenda() {
     notes: "",
   });
   
-  // Carregar agendamentos do Supabase
   useEffect(() => {
     async function fetchAppointments() {
       try {
@@ -90,7 +89,7 @@ export default function Agenda() {
             date: app.date,
             time: app.time,
             notes: app.notes,
-            status: app.status || AppointmentStatus.AGENDADO,
+            status: (app.status as AppointmentStatus) || AppointmentStatus.AGENDADO,
           }));
           
           setAppointments(formattedAppointments);
@@ -124,6 +123,7 @@ export default function Agenda() {
           date: selectedDate.toISOString().split('T')[0],
           time: newAppointment.time,
           notes: newAppointment.notes || null,
+          status: AppointmentStatus.AGENDADO
         };
         
         const { data, error } = await supabase
@@ -146,7 +146,7 @@ export default function Agenda() {
           date: data.date,
           time: data.time,
           notes: data.notes,
-          status: AppointmentStatus.AGENDADO,
+          status: data.status as AppointmentStatus,
         };
         
         setAppointments([...appointments, newAppointmentFormatted]);
@@ -173,7 +173,6 @@ export default function Agenda() {
   };
   
   const createServiceOrderFromAppointment = (appointment: Appointment) => {
-    // Passar os dados do agendamento para a página de criação de ordem de serviço
     navigate("/ordens/nova", {
       state: {
         clientName: appointment.clientName,
@@ -221,7 +220,6 @@ export default function Agenda() {
     return time;
   };
 
-  // Helper function to get status color
   const getStatusColor = (status: AppointmentStatus) => {
     switch (status) {
       case AppointmentStatus.FINALIZADO:
@@ -433,7 +431,6 @@ export default function Agenda() {
                           )}
                         </div>
                         <div className="flex gap-2">
-                          {/* Status change buttons */}
                           {appointment.status === AppointmentStatus.AGENDADO && (
                             <Button
                               onClick={() => updateAppointmentStatus(
